@@ -7,7 +7,8 @@ def driver():
     driver=webdriver.Chrome()
     driver.implicitly_wait(10)
     driver.maximize_window()
-    url="https://opensource-demo.orangehrmlive.com/web/index.php/auth/login"
+    #url="https://opensource-demo.orangehrmlive.com/web/index.php/auth/login"
+    url="https://www.letskodeit.com/practice"
     driver.get(url)
     yield driver #cho script chay het roi moi toi teardown(after test)
     
