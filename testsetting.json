@@ -5,6 +5,7 @@
     "password": "admin123"
 },
 "timeout":{
-    "implicy": 10
+    "implicit": 10,
+    "page_load": 30
 }
 }

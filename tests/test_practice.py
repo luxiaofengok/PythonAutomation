@@ -19,4 +19,3 @@ def test_practice(driver):
     show_button= driver.find_element(By.ID, "show-textbox")
     show_button.click()
     sleep(2)  # import time
-    
