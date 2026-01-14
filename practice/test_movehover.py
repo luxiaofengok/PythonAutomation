@@ -4,6 +4,22 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
 
+"""
+ActionChains Usage Demo - Menu Hover Example
+
+This script demonstrates how to use ActionChains for hovering over menu items.
+
+WHY USE ActionChains?
+- Cannot hover with element.click() - hovering requires ActionChains
+- Simulates real mouse movements
+- Essential for dropdown menus that appear only on hover
+
+HOW IT DIFFERS FROM REGULAR METHODS:
+- element.click() -> Direct click, no hover capability
+- ActionChains.move_to_element() -> Can hover to reveal hidden menus
+- Must call .perform() to execute the action
+"""
+
 
 def demo_menu_hover():
     driver = webdriver.Chrome()
@@ -22,18 +38,25 @@ def demo_menu_hover():
         except Exception:
             pass
 
-        # hover Main Item 2 then Sub Item
+        # HOVER EXAMPLE: Using ActionChains to reveal dropdown menu
+        # Why ActionChains? Regular click() cannot hover - it only clicks
+        # move_to_element() simulates mouse hovering, revealing hidden submenus
         main_item = wait.until(EC.presence_of_element_located((By.XPATH, "//a[normalize-space()='Main Item 2']")))
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", main_item)
+        
+        # ActionChains.move_to_element() performs HOVER action (not click)
+        # .perform() is required to execute the action chain
         ActionChains(driver).move_to_element(main_item).perform()
 
-        # wait for its submenu items to appear, then hover 'Sub Item'
+        # Wait for submenu to become visible after hovering over main item
+        # Then hover over the sub item using ActionChains again
         sub_item_xpath = "//li[a[normalize-space()='Main Item 2']]//a[normalize-space()='Sub Item']"
         try:
             sub_item = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, sub_item_xpath)))
+            # Another hover action to interact with nested menu
             ActionChains(driver).move_to_element(sub_item).perform()
         except Exception:
-            # if direct sub-item not found, try a looser search
+            # Fallback: try a looser search if exact submenu not found
             try:
                 sub_item = wait.until(EC.presence_of_element_located((By.XPATH, "//a[contains(normalize-space(),'Sub Item')]") ))
                 ActionChains(driver).move_to_element(sub_item).perform()
