@@ -1,6 +1,6 @@
 # Practice Tests - Selenium Examples
 
-## ActionChains - Cái này dùng để làm gì? Khác gì với ask (click)?
+## ActionChains - Cái này dùng để làm gì? Khác gì với click thông thường?
 
 ### Trả lời ngắn gọn:
 **ActionChains** được dùng để thực hiện các hành động phức tạp với chuột và bàn phím mà các phương thức thông thường như `click()` hay `send_keys()` không làm được.
