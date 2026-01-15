@@ -9,6 +9,7 @@ class TestSwitchNewWindow:
     def test_open_and_switch_new_window(self):
         url = "https://www.letskodeit.com/practice"
         driver = webdriver.Chrome()
+        driver.maximize_window()
         driver.get(url)
 
         wait = WebDriverWait(driver, 10)

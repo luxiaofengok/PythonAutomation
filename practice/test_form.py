@@ -10,8 +10,8 @@ class TestSubmitForm:
     def test_login_form(self):
 
         driver = webdriver.Chrome()
+        driver.maximize_window()
         driver.get("http://the-internet.herokuapp.com/login")
-
         wait = WebDriverWait(driver, 10)
 
         # wait and fill username
