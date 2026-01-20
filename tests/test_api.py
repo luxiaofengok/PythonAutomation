@@ -38,7 +38,7 @@ class TestJSONPlaceholderAPI:
         print(f"   ID: {todo['id']}")
         print(f"   Title: {todo['title']}")
         print(f"   Completed: {todo['completed']}")
-    
+    @pytest.mark.api
     def test_get_user_verify_id_2(self, api):
      
         # Call API to get user with id=2
