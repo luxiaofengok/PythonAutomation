@@ -40,13 +40,7 @@ class TestJSONPlaceholderAPI:
         print(f"   Completed: {todo['completed']}")
     
     def test_get_user_verify_id_2(self, api):
-        """
-        Test: Call GET https://jsonplaceholder.typicode.com/users/2
-        Verify:
-          - name = "Ervin Howell"
-          - username = "Antonette"
-          - email = "Shanna@melissa.tv"
-        """
+     
         # Call API to get user with id=2
         user = api.get("users/2")
         
