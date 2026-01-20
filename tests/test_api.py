@@ -4,34 +4,18 @@ from utils.config_reader import ConfigReader
 
 
 class TestJSONPlaceholderAPI:
-    """Test cases for JSONPlaceholder API"""
 
-    @pytest.fixture
+    @pytest.fixture(scope="function")
     def api(self):
         """Create API helper with config"""
-        config = ConfigReader("testsetting.json")
-        helper = APIHelper(base_url=config.get("api_url"))
+        helper = APIHelper(base_url=ConfigReader.get_api_url())
         yield helper
         helper.close()
     
     def test_get_todo_verify_id_1(self, api):
-        """
-        Test: Call GET https://jsonplaceholder.typicode.com/todos/1
-        Verify:
-          - userId = 1
-          - id = 1
-          - title = "delectus aut autem"
-          - completed = false
-        """
+
         # Call API to get todo with id=1
-        response = api.get("todos/1")
-        
-        # Verify status code
-        assert response.status_code == 200, \
-            f"Expected 200 but got {response.status_code}"
-        
-        # Parse JSON response
-        todo = response.json()
+        todo = api.get("todos/1")
         
         print(f"\n📋 Todo response: {todo}")
         
@@ -54,3 +38,32 @@ class TestJSONPlaceholderAPI:
         print(f"   ID: {todo['id']}")
         print(f"   Title: {todo['title']}")
         print(f"   Completed: {todo['completed']}")
+    
+    def test_get_user_verify_id_2(self, api):
+        """
+        Test: Call GET https://jsonplaceholder.typicode.com/users/2
+        Verify:
+          - name = "Ervin Howell"
+          - username = "Antonette"
+          - email = "Shanna@melissa.tv"
+        """
+        # Call API to get user with id=2
+        user = api.get("users/2")
+        
+        print(f"\n👤 User response: {user}")
+        
+        # Assertions
+        assert user["name"] == "Ervin Howell", \
+            f"Expected name='Ervin Howell' but got '{user['name']}'"
+        
+        assert user["username"] == "Antonette", \
+            f"Expected username='Antonette' but got '{user['username']}'"
+        
+        assert user["email"] == "Shanna@melissa.tv", \
+            f"Expected email='Shanna@melissa.tv' but got '{user['email']}'"
+        
+        # Print success
+        print(f"\n✅ Verified user:")
+        print(f"   Name: {user['name']}")
+        print(f"   Username: {user['username']}")
+        print(f"   Email: {user['email']}")

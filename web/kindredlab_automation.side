@@ -1,0 +1,265 @@
+{
+  "id": "kindredlab-automation-2026",
+  "version": "2.0",
+  "name": "Kindred Labs Automation",
+  "url": "https://waitlist.kindredlabs.ai",
+  "tests": [{
+    "id": "main-flow",
+    "name": "Daily Tasks",
+    "commands": [{
+      "id": "1",
+      "comment": "Step 1: Open dashboard",
+      "command": "open",
+      "target": "/dashboard",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "2",
+      "comment": "Wait for page load",
+      "command": "pause",
+      "target": "3000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "3",
+      "comment": "Step 2: Scroll to find Visit X buttons",
+      "command": "runScript",
+      "target": "window.scrollTo({top: 800, behavior: 'smooth'})",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "4",
+      "comment": "",
+      "command": "pause",
+      "target": "2000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "5",
+      "comment": "Scroll first Visit X button to center",
+      "command": "runScript",
+      "target": "document.evaluate('/html/body/main/div/div[2]/section/div[6]/div[2]/a/button/b', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.scrollIntoView({behavior: 'smooth', block: 'center'})",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "6",
+      "comment": "",
+      "command": "pause",
+      "target": "2000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "7",
+      "comment": "Click first Visit X button",
+      "command": "click",
+      "target": "xpath=/html/body/main/div/div[2]/section/div[6]/div[2]/a/button/b",
+      "targets": [
+        ["xpath=/html/body/main/div/div[2]/section/div[6]/div[2]/a/button/b", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "8",
+      "comment": "Wait after click",
+      "command": "pause",
+      "target": "2000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "9",
+      "comment": "Scroll second Visit X button to center",
+      "command": "runScript",
+      "target": "document.evaluate('/html/body/main/div/div[2]/section/div[7]/div[2]/a/button/b', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.scrollIntoView({behavior: 'smooth', block: 'center'})",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "10",
+      "comment": "",
+      "command": "pause",
+      "target": "2000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "11",
+      "comment": "Click second Visit X button",
+      "command": "click",
+      "target": "xpath=/html/body/main/div/div[2]/section/div[7]/div[2]/a/button/b",
+      "targets": [
+        ["xpath=/html/body/main/div/div[2]/section/div[7]/div[2]/a/button/b", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "12",
+      "comment": "Wait after click",
+      "command": "pause",
+      "target": "2000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "13",
+      "comment": "Step 3: Scroll down to find Claim Reward button",
+      "command": "runScript",
+      "target": "window.scrollTo({top: 1500, behavior: 'smooth'})",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "14",
+      "comment": "",
+      "command": "pause",
+      "target": "3000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "15",
+      "comment": "Scroll daily check-in button to center",
+      "command": "runScript",
+      "target": "document.evaluate('/html/body/main/div/div[2]/div[5]/div/div[2]/button[1]/span', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.scrollIntoView({behavior: 'smooth', block: 'center'})",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "16",
+      "comment": "",
+      "command": "pause",
+      "target": "8000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "17",
+      "comment": "Click Claim Reward (daily check-in)",
+      "command": "click",
+      "target": "xpath=/html/body/main/div/div[2]/div[5]/div/div[2]/button[1]/span",
+      "targets": [
+        ["xpath=/html/body/main/div/div[2]/div[5]/div/div[2]/button[1]/span", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "18",
+      "comment": "",
+      "command": "pause",
+      "target": "3000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "19",
+      "comment": "Wait for modal to appear",
+      "command": "waitForElementPresent",
+      "target": "xpath=/html/body/div[3]/div[3]/button",
+      "targets": [],
+      "value": "5000"
+    }, {
+      "id": "20",
+      "comment": "",
+      "command": "pause",
+      "target": "2000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "21",
+      "comment": "Click Okay button in modal",
+      "command": "click",
+      "target": "xpath=/html/body/div[3]/div[3]/button",
+      "targets": [
+        ["xpath=/html/body/div[3]/div[3]/button", "xpath:position"],
+        ["xpath=//button[contains(.,'Okay!')]", "xpath:innerText"]
+      ],
+      "value": ""
+    }, {
+      "id": "22",
+      "comment": "Wait 1 minutes as requested",
+      "command": "pause",
+      "target": "68000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "23",
+      "comment": "Step 4: Scroll up to find Claim Reward buttons",
+      "command": "runScript",
+      "target": "window.scrollTo({top: 800, behavior: 'smooth'})",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "24",
+      "comment": "",
+      "command": "pause",
+      "target": "2000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "25",
+      "comment": "Scroll first Claim Reward to center",
+      "command": "runScript",
+      "target": "document.evaluate('/html/body/main/div/div[2]/section/div[6]/div[2]/button/b', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.scrollIntoView({behavior: 'smooth', block: 'center'})",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "26",
+      "comment": "",
+      "command": "pause",
+      "target": "2000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "27",
+      "comment": "Click first Claim Reward button",
+      "command": "click",
+      "target": "xpath=/html/body/main/div/div[2]/section/div[6]/div[2]/button/b",
+      "targets": [
+        ["xpath=/html/body/main/div/div[2]/section/div[6]/div[2]/button/b", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "28",
+      "comment": "",
+      "command": "pause",
+      "target": "3000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "29",
+      "comment": "Scroll second Claim Reward to center",
+      "command": "runScript",
+      "target": "document.evaluate('/html/body/main/div/div[2]/section/div[7]/div[2]/button/b', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.scrollIntoView({behavior: 'smooth', block: 'center'})",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "30",
+      "comment": "",
+      "command": "pause",
+      "target": "2000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "31",
+      "comment": "Click second Claim Reward button",
+      "command": "click",
+      "target": "xpath=/html/body/main/div/div[2]/section/div[7]/div[2]/button/b",
+      "targets": [
+        ["xpath=/html/body/main/div/div[2]/section/div[7]/div[2]/button/b", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "32",
+      "comment": "",
+      "command": "pause",
+      "target": "3000",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "33",
+      "comment": "Done!",
+      "command": "echo",
+      "target": "All tasks completed successfully!",
+      "targets": [],
+      "value": ""
+    }]
+  }],
+  "suites": [{
+    "id": "default-suite",
+    "name": "Default Suite",
+    "persistSession": false,
+    "parallel": false,
+    "timeout": 300,
+    "tests": ["main-flow"]
+  }],
+  "urls": ["https://waitlist.kindredlabs.ai/"],
+  "plugins": []
+}
