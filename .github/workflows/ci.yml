@@ -39,7 +39,7 @@ jobs:
       - name: Run Test 
         #run: pytest -m "smoke or api" --html=report/report.html --self-contained-html
         run: |
-          pytest ${ { matrix.suite } } 
+          pytest ${ { matrix.suite } } --maxfail=1  --disable-warnings 
 
       - name: Upload file report
         if: always()
