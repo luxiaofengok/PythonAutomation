@@ -41,12 +41,12 @@ jobs:
      
 
       - name: Run Test
-        run: 
-          pytest ${{ matrix.suite }} --html=report/report.html --self-contained-html
+        run: |
+          pytest ${{ matrix.suite }} --html=report/report-${{ strategy.job-index }}.html --self-contained-html
 
       - name: Upload file report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pytest-report-${{ matrix.suite }}
-          path: report/report.html
+          name: pytest-report-${{ strategy.job-index }}
+          path: report/report-${{ strategy.job-index }}.html
