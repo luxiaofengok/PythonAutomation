@@ -8,6 +8,9 @@ def driver():
     driver=webdriver.Chrome()
     driver.implicitly_wait(10)
     driver.maximize_window()
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")  # Run headless Chrome
+    driver = webdriver.Chrome(options=options)
     #url="https://opensource-demo.orangehrmlive.com/web/index.php/auth/login"
     #url="https://www.letskodeit.com/practice"
     url=ConfigReader.get_base_url()
