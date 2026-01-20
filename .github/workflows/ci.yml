@@ -31,7 +31,7 @@ jobs:
 
       - name: Run Test
         run: |
-          pytest -m "smoke and api" -v -s --html=report/report.html --self-contained-html 
+          pytest -m "smoke or api" -v -s --html=report/report.html --self-contained-html
 
       - name: Upload file report
         if: always()
