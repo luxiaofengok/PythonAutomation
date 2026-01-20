@@ -5,6 +5,7 @@
     "username" : "Admin",
     "password": "admin123"
 },
+"headless": false,
 "timeout":{
     "implicit": 10,
     "page_load": 30

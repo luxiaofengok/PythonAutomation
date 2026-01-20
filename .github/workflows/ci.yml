@@ -37,9 +37,8 @@ jobs:
         run: mkdir -p report
 
       - name: Run Test
-        run: |
-          # pytest -m "smoke or api" --html=report/report.html --self-contained-html
-          pytest ${ { matrix.suite } } --html=report/report.html --self-contained-html
+        #run: pytest -m "smoke or api" --html=report/report.html --self-contained-html
+        run: pytest ${ { matrix.suite } } --html=report/report.html --self-contained-html
 
       - name: Upload file report
         if: always()
