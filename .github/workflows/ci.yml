@@ -36,9 +36,10 @@ jobs:
       - name: Create a test report Folder
         run: mkdir -p report
 
-      - name: Run Test
+      - name: Run Test 
         #run: pytest -m "smoke or api" --html=report/report.html --self-contained-html
-        run: pytest ${ { matrix.suite } } --html=report/report.html --self-contained-html
+        run: |
+          pytest ${ { matrix.suite } } 
 
       - name: Upload file report
         if: always()
