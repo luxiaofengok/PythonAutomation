@@ -9,6 +9,13 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - tests/test_login.py
+          - tests/test_api.py
     steps:
       - name: Checkout source code from github
         uses: actions/checkout@v4
@@ -31,7 +38,8 @@ jobs:
 
       - name: Run Test
         run: |
-          pytest -m "smoke or api" --html=report/report.html --self-contained-html -v 
+          # pytest -m "smoke or api" --html=report/report.html --self-contained-html
+          pytest ${ { matrix.suite } } --html=report/report.html --self-contained-html
 
       - name: Upload file report
         if: always()
