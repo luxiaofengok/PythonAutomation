@@ -45,7 +45,7 @@ def find_and_click(driver, selectors, timeout=30, scroll=True):
                 EC.element_to_be_clickable((By.XPATH, selector))
             )
             if scroll:
-                driver.execute_script("arguments[0].scrollIntoView(true);", element)
+                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
                 time.sleep(0.5)
             element.click()
             return True
@@ -165,7 +165,7 @@ def access_website_with_profile(profile_path, profile_idx):
         
         # Wait before closing
         print(f"[Profile {profile_idx}] Waiting before closing...")
-        time.sleep(10)
+        time.sleep(8)
         
         return f"Profile {profile_idx}: Success"
         

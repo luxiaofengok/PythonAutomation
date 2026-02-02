@@ -18,6 +18,7 @@ class APIHelper:
         url = f"{self.base_url}{endpoint}" if self.base_url else endpoint
         response = self.session.get(url, params=params, headers=headers, **kwargs)
         print(f"GET {url} -> Status: {response.status_code}")
+        # response.raise_for_status()
         return response .json()
     
     def post(self, endpoint, data=None, json=None, headers=None, **kwargs):
@@ -25,6 +26,7 @@ class APIHelper:
         url = f"{self.base_url}{endpoint}" if self.base_url else endpoint
         response = self.session.post(url, data=data, json=json, headers=headers, **kwargs)
         print(f"POST {url} -> Status: {response.status_code}")
+        # response.raise_for_status()
         return response .json()
     
     def close(self):

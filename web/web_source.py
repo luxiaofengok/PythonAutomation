@@ -10,6 +10,18 @@ from selenium.common.exceptions import TimeoutException
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time, os, shutil, tempfile, glob, subprocess
 
+# ==================== TIMING CONFIGURATION ====================
+WAIT_PAGE_LOAD = 5          # Chờ sau khi load trang
+WAIT_AFTER_LOGIN = 2        # Chờ sau khi click login
+WAIT_GOOGLE_LOGIN = 4       # Chờ sau khi click Google login
+WAIT_ACCOUNT_SELECT = 2     # Chờ sau khi chọn tài khoản
+WAIT_BEFORE_CLAIM = 3       # Chờ trước khi click claim
+WAIT_AFTER_CLAIM = 3        # Chờ sau khi click claim
+WAIT_BEFORE_CLOSE = 8       # Chờ trước khi đóng browser
+WAIT_BETWEEN_BATCHES = 8    # Chờ giữa các batch
+ELEMENT_TIMEOUT = 30        # Timeout tìm element (giây)
+# ============================================================
+
 FIREFOX_PROFILES = [
     "C:\\Users\\Admin\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles\\EYFYwuoC.Profile 1",
     "C:\\Users\\Admin\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles\\K7Ms67Yf.Hồ sơ 2",
@@ -35,10 +47,25 @@ FIREFOX_PROFILES = [
     "C:\\Users\\Admin\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles\\8LrfqVIk.Hồ sơ 22",
 ]
 
-def create_firefox_driver(profile_path, optimize=True):
+def create_firefox_driver(profile_path, optimize=True, headless=False):
     """Create Firefox driver with optimization settings"""
     options = Options()
     options.profile = profile_path
+    
+    # Enable headless mode if requested
+    if headless:
+        options.add_argument('--headless')
+    
+    # Cookie persistence settings - ALWAYS enabled to keep login
+    cookie_prefs = {
+        "network.cookie.cookieBehavior": 0,  # Accept all cookies
+        "network.cookie.lifetimePolicy": 0,  # Keep cookies until they expire
+        "privacy.clearOnShutdown.cookies": False,  # Don't clear cookies on shutdown
+        "privacy.clearOnShutdown.cache": False,  # Don't clear cache on shutdown
+        "privacy.clearOnShutdown.sessions": False,  # Don't clear sessions
+    }
+    for key, value in cookie_prefs.items():
+        options.set_preference(key, value)
     
     if optimize:
         prefs = {
@@ -57,7 +84,7 @@ def create_firefox_driver(profile_path, optimize=True):
     return driver
 
 
-def find_element_by_selectors(driver, selectors, wait_time=5):
+def find_element_by_selectors(driver, selectors, wait_time=30):
     """Find element using multiple selectors"""
     for selector in selectors:
         try:

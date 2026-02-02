@@ -135,6 +135,9 @@ def access_website_with_profile(profile_path, profile_index):
         options = Options()
         options.profile = profile_path
         
+        # Enable headless mode
+        options.add_argument("--headless")
+        
         # Optimize Firefox to reduce disk usage
         options.set_preference("browser.cache.disk.enable", False)
         options.set_preference("browser.cache.memory.enable", True)
@@ -144,6 +147,8 @@ def access_website_with_profile(profile_path, profile_index):
         options.set_preference("browser.cache.disk.smart_size.enabled", False)
         
         # Initialize Firefox driver
+
+
         driver = webdriver.Firefox(options=options)
         driver.maximize_window()
         wait = WebDriverWait(driver, 30)

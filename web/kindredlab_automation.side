@@ -45,7 +45,7 @@
       "id": "6",
       "comment": "",
       "command": "pause",
-      "target": "2000",
+      "target": "3000",
       "targets": [],
       "value": ""
     }, {
@@ -75,7 +75,7 @@
       "id": "10",
       "comment": "",
       "command": "pause",
-      "target": "2000",
+      "target": "3000",
       "targets": [],
       "value": ""
     }, {
@@ -119,7 +119,7 @@
       "id": "16",
       "comment": "",
       "command": "pause",
-      "target": "8000",
+      "target": "12000",
       "targets": [],
       "value": ""
     }, {
@@ -164,9 +164,9 @@
       "value": ""
     }, {
       "id": "22",
-      "comment": "Wait 1 minutes as requested",
+      "comment": "Wait 2 minutes as requested",
       "command": "pause",
-      "target": "68000",
+      "target": "128000",
       "targets": [],
       "value": ""
     }, {

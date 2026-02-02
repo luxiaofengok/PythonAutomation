@@ -54,8 +54,8 @@ def access_website_with_profile(profile_path, profile_index):
         options = Options()
         options.profile = profile_path
         
-        # Optional: Run in headless mode (remove these lines if you want to see the browser)
-        # options.add_argument('--headless')
+        # Enable headless mode
+        options.add_argument('--headless')
         
         # Initialize Firefox driver
         driver = webdriver.Firefox(options=options)
@@ -237,10 +237,12 @@ def access_website_with_profile(profile_path, profile_index):
                 # Click on the specific image/element
                 print(f"[Profile {profile_index}] Looking for task element...")
                 task_selectors = [
+                    "//*[@id='root']/div/div[3]/div/div[2]/div[2]/div[1]/div[2]/div/img",
                     "/html/body/div[1]/div/div[3]/div/div[2]/div[3]/div[1]/div[2]/div/img",
                     "//img[contains(@class, 'task')]",
                     "//div[contains(@class, 'task')]//img",
-                    "(//img)[1]"
+                    "(//img)[1]",
+                    
                 ]
                 
                 task_element = None
