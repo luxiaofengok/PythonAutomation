@@ -20,7 +20,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 import time
+import random
 
 # ==================== TIMING CONFIGURATION ====================
 WAIT_PAGE_LOAD = 30         # Chờ sau khi load trang
@@ -40,6 +42,46 @@ MAX_RETRIES = 3             # Số lần thử lại khi không tìm thấy elem
 # ============================================================
 
 URL = "https://mm.pip.world/"
+
+
+def reload_page_human_like(driver, profile_index, wait_min=25, wait_max=35):
+    """Reload page with human-like behavior"""
+    try:
+        print(f"[Profile {profile_index}] Reloading page with human-like behavior...")
+
+        # Scroll randomly before reload (human behavior)
+        scroll_amount = random.randint(-200, 200)
+        driver.execute_script(f"window.scrollBy(0, {scroll_amount});")
+        time.sleep(random.uniform(0.5, 1.2))
+
+        # Move mouse randomly (simulate human movement)
+        try:
+            body = driver.find_element(By.TAG_NAME, "body")
+            actions = ActionChains(driver)
+            actions.move_to_element_with_offset(body, random.randint(50, 300), random.randint(50, 300))
+            actions.perform()
+            time.sleep(random.uniform(0.3, 0.7))
+        except:
+            pass
+
+        # Reload
+        driver.refresh()
+
+        # Random wait after reload
+        wait_time = random.uniform(wait_min, wait_max)
+        print(f"[Profile {profile_index}] Waiting {wait_time:.1f}s for page to reload...")
+        time.sleep(wait_time)
+
+        # Scroll to top naturally after reload
+        driver.execute_script("window.scrollTo({top: 0, behavior: 'smooth'});")
+        time.sleep(random.uniform(0.5, 1.0))
+
+        print(f"[Profile {profile_index}] Page reloaded successfully")
+
+    except Exception as e:
+        print(f"[Profile {profile_index}] Reload error: {str(e)}, trying simple refresh...")
+        driver.refresh()
+        time.sleep(wait_min)
 
 
 def login_google_direct(driver, profile_index):
@@ -217,6 +259,39 @@ def process_profile(profile_path, profile_index):
         driver.get(URL)
         time.sleep(WAIT_PAGE_LOAD)
         
+        # Check page sau khi mở - chỉ reload nếu trang trống hoặc bị blocked
+        max_reload_attempts = 3
+        for reload_attempt in range(max_reload_attempts):
+            try:
+                # Check xem page có bị trắng hoặc blocked không
+                page_body = driver.find_element(By.TAG_NAME, "body").text
+                page_html = driver.page_source.lower()
+                
+                # Chỉ reload nếu:
+                # 1. Trang trống trơn (body text < 50 ký tự)
+                # 2. Có chữ "blocked" trong page
+                is_blank = len(page_body.strip()) < 50
+                is_blocked = "blocked" in page_html
+                
+                if is_blank or is_blocked:
+                    if reload_attempt < max_reload_attempts - 1:
+                        if is_blank:
+                            print(f"[Profile {profile_index}] Page is blank after opening, reloading... (attempt {reload_attempt+1}/{max_reload_attempts})")
+                        else:
+                            print(f"[Profile {profile_index}] Page is blocked after opening, reloading... (attempt {reload_attempt+1}/{max_reload_attempts})")
+                        reload_page_human_like(driver, profile_index, wait_min=25, wait_max=35)
+                        continue
+                    else:
+                        print(f"[Profile {profile_index}] Page still blank/blocked after {max_reload_attempts} attempts")
+                        return False
+                else:
+                    print(f"[Profile {profile_index}] Page opened successfully, proceeding to login...")
+                    break
+                    
+            except Exception as e:
+                print(f"[Profile {profile_index}] Warning: Page check error: {str(e)[:100]}, continuing anyway...")
+                break
+        
         # Login trực tiếp bằng Google
         if not login_google_direct(driver, profile_index):
             print(f"[Profile {profile_index}] Login failed!")
@@ -226,48 +301,38 @@ def process_profile(profile_path, profile_index):
         print(f"[Profile {profile_index}] Waiting for page to load completely...")
         time.sleep(WAIT_AFTER_LOGIN)
         
-        # Check page health và reload nếu cần (tối đa 3 lần)
+        # Check page - chỉ reload nếu trang trống hoặc bị blocked
         max_reload_attempts = 3
         for reload_attempt in range(max_reload_attempts):
             try:
-                # Wait for document ready
-                WebDriverWait(driver, 30).until(
-                    lambda d: d.execute_script('return document.readyState') == 'complete'
-                )
-                
-                # Check xem page có bị trắng/lỗi không
+                # Check xem page có bị trắng hoặc blocked không
                 page_body = driver.find_element(By.TAG_NAME, "body").text
-                page_html = driver.page_source
+                page_html = driver.page_source.lower()
                 
-                # Kiểm tra các dấu hiệu page bị lỗi
+                # Chỉ reload nếu:
+                # 1. Trang trống trơn (body text < 50 ký tự)
+                # 2. Có chữ "blocked" trong page
                 is_blank = len(page_body.strip()) < 50
-                is_error = any(error_text in page_html.lower() for error_text in [
-                    "blocked", "error", "failed", "denied", "403", "502", "503", "504"
-                ])
+                is_blocked = "blocked" in page_html
                 
-                if is_blank or is_error:
+                if is_blank or is_blocked:
                     if reload_attempt < max_reload_attempts - 1:
-                        print(f"[Profile {profile_index}] Page error/blank detected (attempt {reload_attempt+1}/{max_reload_attempts})")
-                        print(f"[Profile {profile_index}] Reloading page and waiting 30s...")
-                        driver.refresh()
-                        time.sleep(30)
+                        if is_blank:
+                            print(f"[Profile {profile_index}] Page is blank, reloading... (attempt {reload_attempt+1}/{max_reload_attempts})")
+                        else:
+                            print(f"[Profile {profile_index}] Page is blocked, reloading... (attempt {reload_attempt+1}/{max_reload_attempts})")
+                        reload_page_human_like(driver, profile_index, wait_min=25, wait_max=35)
                         continue
                     else:
-                        print(f"[Profile {profile_index}] Page still has issues after {max_reload_attempts} attempts")
+                        print(f"[Profile {profile_index}] Page still blank/blocked after {max_reload_attempts} attempts")
                         return False
                 else:
-                    print(f"[Profile {profile_index}] Page loaded successfully")
+                    print(f"[Profile {profile_index}] Page loaded successfully, proceeding to tasks...")
                     break
                     
             except Exception as e:
-                if reload_attempt < max_reload_attempts - 1:
-                    print(f"[Profile {profile_index}] Page load check failed: {str(e)[:100]}")
-                    print(f"[Profile {profile_index}] Reloading page and waiting 30s...")
-                    driver.refresh()
-                    time.sleep(30)
-                else:
-                    print(f"[Profile {profile_index}] Warning: Page load issues, continuing anyway...")
-                    break
+                print(f"[Profile {profile_index}] Warning: Page check error: {str(e)[:100]}, continuing anyway...")
+                break
         
         # XPath definitions
         xpath_dropdown = "/html/body/div[1]/div[1]/div[1]/div[3]/div[2]"

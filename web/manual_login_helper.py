@@ -42,7 +42,6 @@ def open_profile_for_login(profile_name, index):
     print(f"3. Complete any tasks if needed")
     print(f"4. Close the browser when done")
     print(f"{'='*60}\n")
-    
     try:
         # Open Firefox with the profile
         subprocess.run([

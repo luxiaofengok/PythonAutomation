@@ -49,8 +49,26 @@ FIREFOX_PROFILES = [
 
 def create_firefox_driver(profile_path, optimize=True, headless=False):
     """Create Firefox driver with optimization settings"""
+    # Check if profile exists
+    if not os.path.exists(profile_path):
+        raise Exception(f"Profile path does not exist: {profile_path}")
+    
+    # Check and remove lock files
+    lock_files = ["parent.lock", ".parentlock", "lock", ".lock"]
+    for lock_file in lock_files:
+        lock_path = os.path.join(profile_path, lock_file)
+        if os.path.exists(lock_path):
+            try:
+                os.remove(lock_path)
+                print(f"Removed lock file: {lock_file}")
+            except Exception as e:
+                print(f"Warning: Cannot remove {lock_file}: {e}")
+    
+    # Create Firefox profile object from path
+    firefox_profile = webdriver.FirefoxProfile(profile_path)
+    
     options = Options()
-    options.profile = profile_path
+    options.profile = firefox_profile
     
     # Enable headless mode if requested
     if headless:
@@ -79,9 +97,12 @@ def create_firefox_driver(profile_path, optimize=True, headless=False):
         for key, value in prefs.items():
             options.set_preference(key, value)
     
-    driver = webdriver.Firefox(options=options)
-    driver.maximize_window()
-    return driver
+    try:
+        driver = webdriver.Firefox(options=options)
+        driver.maximize_window()
+        return driver
+    except Exception as e:
+        raise Exception(f"Failed to create Firefox driver: {str(e)}")
 
 
 def find_element_by_selectors(driver, selectors, wait_time=30):
@@ -273,7 +294,7 @@ def run_batch(profiles, batch_num, task_function, max_workers=8):
     return results
 
 
-def run_all_batches(task_function, profiles=None, wait_between_batches=10):
+def run_all_batches(task_function, profiles=None, wait_between_batches=8):
     """
     Run all 3 batches (8+8+6 profiles)
     Args:
@@ -315,5 +336,5 @@ if __name__ == "__main__":
     print("- clean_temp_files, cleanup_all")
     print("\nBatch Functions:")
     print("- run_batch(profiles, batch_num, task_function, max_workers=8)")
-    print("- run_all_batches(task_function, profiles=None)")
+    print("- run_all_batches(task_function, profiles=None, wait_between_batches=8)")
     print("=" * 60)

@@ -90,10 +90,7 @@ SUGGESTED_QUESTIONS = [
 
 
 def ask_question_only(driver, profile_index):
-    """
-    Just ask a question without selecting mode (used for repeated instant questions)
-    Click textarea → click hottest question → press Enter
-    """
+ 
     try:
         print(f"[Profile {profile_index}] Looking for textarea...")
         time.sleep(1)
@@ -130,7 +127,6 @@ def ask_question_only(driver, profile_index):
             # Find clickable hottest question elements (buttons or divs with cursor-pointer)
             # Avoid sidebar by looking for elements in the main chat area
             question_rows = []
-            
             # Strategy 1: Find button elements containing "Hottest Question" text
             try:
                 buttons = driver.find_elements(By.XPATH, "//button[contains(., 'Hottest Question')]")
@@ -171,54 +167,41 @@ def ask_question_only(driver, profile_index):
                 except:
                     pass
             
-            if len(hottest_elements) > 0:
-                # Get visible question rows
-                question_rows = []
-                for elem in hottest_elements:
-                    try:
-                        parent = elem.find_element(By.XPATH, "./ancestor::div[contains(@class, 'flex')]")
-                        if parent.is_displayed():
-                            question_rows.append(parent)
-                    except:
-                        pass
+            # Click on a question if found
+            if len(question_rows) > 0:
+                # Random select one
+                selected_row = random.choice(question_rows)
+                question_text = selected_row.text[:100] if selected_row.text else "(no text)"
+                print(f"[Profile {profile_index}] Selected: {question_text}")
                 
-                print(f"[Profile {profile_index}] Found {len(question_rows)} visible question rows")
+                # Scroll and hover
+                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", selected_row)
+                time.sleep(0.3)
                 
-                if len(question_rows) > 0:
-                    # Random select one
-                    import random as rand
-                    selected_row = rand.choice(question_rows)
-                    question_text = selected_row.text[:100] if selected_row.text else "(no text)"
-                    print(f"[Profile {profile_index}] Selected: {question_text}")
-                    
-                    # Scroll and hover
-                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", selected_row)
-                    time.sleep(0.3)
-                    
-                    print(f"[Profile {profile_index}] Hovering...")
+                print(f"[Profile {profile_index}] Hovering...")
+                actions = ActionChains(driver)
+                actions.move_to_element(selected_row).pause(0.5).perform()
+                time.sleep(0.5)
+                
+                # Click
+                print(f"[Profile {profile_index}] Clicking...")
+                try:
                     actions = ActionChains(driver)
-                    actions.move_to_element(selected_row).pause(0.5).perform()
-                    time.sleep(0.5)
-                    
-                    # Click
-                    print(f"[Profile {profile_index}] Clicking...")
-                    try:
-                        actions = ActionChains(driver)
-                        actions.move_to_element(selected_row).click().perform()
-                        print(f"[Profile {profile_index}] ✅ Clicked")
-                    except:
-                        driver.execute_script("arguments[0].click();", selected_row)
-                        print(f"[Profile {profile_index}] ✅ Clicked with JS")
-                    
-                    time.sleep(1.5)
-                    
-                    # Press Enter
-                    print(f"[Profile {profile_index}] Pressing Enter...")
-                    textarea = driver.find_element(By.ID, "chat-input")
-                    textarea.send_keys(Keys.RETURN)
-                    time.sleep(2)
-                    print(f"[Profile {profile_index}] ✅ Question submitted!")
-                    return True
+                    actions.move_to_element(selected_row).click().perform()
+                    print(f"[Profile {profile_index}] ✅ Clicked")
+                except:
+                    driver.execute_script("arguments[0].click();", selected_row)
+                    print(f"[Profile {profile_index}] ✅ Clicked with JS")
+                
+                time.sleep(1.5)
+                
+                # Press Enter
+                print(f"[Profile {profile_index}] Pressing Enter...")
+                textarea = driver.find_element(By.ID, "chat-input")
+                textarea.send_keys(Keys.RETURN)
+                time.sleep(2)
+                print(f"[Profile {profile_index}] ✅ Question submitted!")
+                return True
             
             print(f"[Profile {profile_index}] No questions found, typing manually...")
             random_question = random.choice(SUGGESTED_QUESTIONS)
@@ -510,62 +493,48 @@ def select_mode_and_ask(driver, profile_index, mode="deep research"):
                     except:
                         pass
                 
-                if len(hottest_elements) > 0:
-                    # Get all visible hottest question rows
-                    question_rows = []
-                    for elem in hottest_elements:
-                        try:
-                            # Get the parent container of hottest question
-                            parent = elem.find_element(By.XPATH, "./ancestor::div[contains(@class, 'flex')]")
-                            if parent.is_displayed():
-                                question_rows.append(parent)
-                        except:
-                            pass
+                # Click on a question if found
+                if len(question_rows) > 0:
+                    # Random select one question
+                    selected_row = random.choice(question_rows)
+                    question_text = selected_row.text[:100] if selected_row.text else "(no text)"
+                    print(f"[Profile {profile_index}] Selected question: {question_text}")
                     
-                    print(f"[Profile {profile_index}] DEBUG: Found {len(question_rows)} visible question rows")
+                    # Scroll into view
+                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", selected_row)
+                    time.sleep(0.3)
                     
-                    if len(question_rows) > 0:
-                        # Random select one question
-                        import random as rand
-                        selected_row = rand.choice(question_rows)
-                        question_text = selected_row.text[:100] if selected_row.text else "(no text)"
-                        print(f"[Profile {profile_index}] Selected question: {question_text}")
-                        
-                        # Scroll into view
-                        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", selected_row)
-                        time.sleep(0.3)
-                        
-                        # Hover to the element first
-                        print(f"[Profile {profile_index}] Hovering to question...")
+                    # Hover to the element first
+                    print(f"[Profile {profile_index}] Hovering to question...")
+                    actions = ActionChains(driver)
+                    actions.move_to_element(selected_row).pause(0.5).perform()
+                    time.sleep(0.5)
+                    
+                    # Now click (try left click first, then right click if needed)
+                    print(f"[Profile {profile_index}] Clicking question...")
+                    try:
                         actions = ActionChains(driver)
-                        actions.move_to_element(selected_row).pause(0.5).perform()
-                        time.sleep(0.5)
-                        
-                        # Now click (try left click first, then right click if needed)
-                        print(f"[Profile {profile_index}] Clicking question...")
+                        actions.move_to_element(selected_row).click().perform()
+                        print(f"[Profile {profile_index}] ✅ Clicked with left click")
+                    except:
                         try:
                             actions = ActionChains(driver)
-                            actions.move_to_element(selected_row).click().perform()
-                            print(f"[Profile {profile_index}] ✅ Clicked with left click")
+                            actions.move_to_element(selected_row).context_click().perform()
+                            print(f"[Profile {profile_index}] ✅ Clicked with right click")
                         except:
-                            try:
-                                actions = ActionChains(driver)
-                                actions.move_to_element(selected_row).context_click().perform()
-                                print(f"[Profile {profile_index}] ✅ Clicked with right click")
-                            except:
-                                # Fallback to JavaScript
-                                driver.execute_script("arguments[0].click();", selected_row)
-                                print(f"[Profile {profile_index}] ✅ Clicked with JavaScript")
-                        
-                        time.sleep(1.5)
-                        
-                        # Press Enter to submit
-                        print(f"[Profile {profile_index}] Pressing Enter to submit...")
-                        textarea = driver.find_element(By.ID, "chat-input")
-                        textarea.send_keys(Keys.RETURN)
-                        time.sleep(2)
-                        print(f"[Profile {profile_index}] ✅ Question submitted with Enter key!")
-                        return True
+                            # Fallback to JavaScript
+                            driver.execute_script("arguments[0].click();", selected_row)
+                            print(f"[Profile {profile_index}] ✅ Clicked with JavaScript")
+                    
+                    time.sleep(1.5)
+                    
+                    # Press Enter to submit
+                    print(f"[Profile {profile_index}] Pressing Enter to submit...")
+                    textarea = driver.find_element(By.ID, "chat-input")
+                    textarea.send_keys(Keys.RETURN)
+                    time.sleep(2)
+                    print(f"[Profile {profile_index}] ✅ Question submitted with Enter key!")
+                    return True
                 
                 print(f"[Profile {profile_index}] ⚠️ No question rows found, typing manually...")
                 # Fallback to typing
@@ -612,10 +581,13 @@ def asksurf_automation(profile_path, profile_index):
     try:
         print(f"\n{'='*60}")
         print(f"[Profile {profile_index}] Starting AskSurf automation")
+        print(f"[Profile {profile_index}] Profile path: {profile_path}")
         print(f"{'='*60}\n")
         
         # Create driver
-        driver = create_firefox_driver(profile_path, optimize=True)
+        print(f"[Profile {profile_index}] Creating Firefox driver...")
+        driver = create_firefox_driver(profile_path, optimize=True, headless=True)
+        print(f"[Profile {profile_index}] ✅ Firefox driver created successfully")
         
         # Step 1: Access website
         print(f"[Profile {profile_index}] Accessing {ASKSURF_URL}")
@@ -731,8 +703,36 @@ def asksurf_automation(profile_path, profile_index):
         else:
             print(f"[Profile {profile_index}] ⚠️ Chat interface not found, but continuing...")
         
-        # Step 2: Instant mode (10 times, wait 15 seconds each)
-        print(f"\n[Profile {profile_index}] === STEP 2: Instant Mode (x{INSTANT_REPEAT_COUNT}) ===")
+        # Step 2: Deep Research mode (1 time, wait 2 minutes)
+        print(f"\n[Profile {profile_index}] === STEP 2: Deep Research Mode ===")
+        
+        if select_mode_and_ask(driver, profile_index, mode="deep research"):
+            print(f"[Profile {profile_index}] Waiting {WAIT_AFTER_DEEP_RESEARCH} seconds (2 minutes) for deep research response...")
+            time.sleep(WAIT_AFTER_DEEP_RESEARCH)
+        else:
+            print(f"[Profile {profile_index}] ⚠️ Deep research failed!")
+        
+        # Step 3: Instant mode (10 times, wait 15 seconds each)
+        print(f"\n[Profile {profile_index}] === STEP 3: Instant Mode (x{INSTANT_REPEAT_COUNT}) ===")
+        
+        # Click "New Chat" button before starting instant mode
+        print(f"[Profile {profile_index}] Looking for 'New Chat' button before instant mode...")
+        new_chat_selectors = [
+            "//button[@data-sidebar='menu-button']//span[contains(text(), 'New Chat')]",
+            "//button[contains(@class, 'peer/menu-button')]//span[contains(text(), 'New Chat')]",
+            "//button//span[contains(text(), 'New Chat')]",
+            "//button//span[text()='New Chat']",
+            "//*[contains(text(), 'New Chat')]",
+        ]
+        
+        new_chat_button = find_element_by_selectors(driver, new_chat_selectors, 10)
+        if new_chat_button:
+            print(f"[Profile {profile_index}] Found 'New Chat' button, clicking...")
+            click_element_safe(driver, new_chat_button)
+            time.sleep(3)
+            print(f"[Profile {profile_index}] ✅ Clicked 'New Chat' button")
+        else:
+            print(f"[Profile {profile_index}] ⚠️ 'New Chat' button not found, continuing anyway...")
         
         # First instant question with mode selection
         print(f"\n[Profile {profile_index}] --- Instant Question 1/{INSTANT_REPEAT_COUNT} ---")
@@ -772,34 +772,6 @@ def asksurf_automation(profile_path, profile_index):
                     time.sleep(3)
         else:
             print(f"[Profile {profile_index}] ⚠️ First instant question failed!")
-        
-        # Step 3: Deep Research mode (1 time, wait 2 minutes)
-        print(f"\n[Profile {profile_index}] === STEP 3: Deep Research Mode ===")
-        
-        # Click "New Chat" button before deep research
-        print(f"[Profile {profile_index}] Looking for 'New Chat' button before deep research...")
-        new_chat_selectors = [
-            "//button[@data-sidebar='menu-button']//span[contains(text(), 'New Chat')]",
-            "//button[contains(@class, 'peer/menu-button')]//span[contains(text(), 'New Chat')]",
-            "//button//span[contains(text(), 'New Chat')]",
-            "//button//span[text()='New Chat']",
-            "//*[contains(text(), 'New Chat')]",
-        ]
-        
-        new_chat_button = find_element_by_selectors(driver, new_chat_selectors, 10)
-        if new_chat_button:
-            print(f"[Profile {profile_index}] Found 'New Chat' button, clicking...")
-            click_element_safe(driver, new_chat_button)
-            time.sleep(3)
-            print(f"[Profile {profile_index}] ✅ Clicked 'New Chat' button")
-        else:
-            print(f"[Profile {profile_index}] ⚠️ 'New Chat' button not found, continuing anyway...")
-        
-        if select_mode_and_ask(driver, profile_index, mode="deep research"):
-            print(f"[Profile {profile_index}] Waiting {WAIT_AFTER_DEEP_RESEARCH} seconds (2 minutes) for deep research response...")
-            time.sleep(WAIT_AFTER_DEEP_RESEARCH)
-        else:
-            print(f"[Profile {profile_index}] ⚠️ Deep research failed!")
         
         # Final wait before closing
         print(f"\n[Profile {profile_index}] All questions completed! Waiting before closing...")
