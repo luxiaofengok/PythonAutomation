@@ -16,7 +16,7 @@ from web.web_source import (
 )
 
 # ==================== CONFIGURATION ====================
-URL = "https://upshot.cards"
+URL = "https://upshot.cards/claim"
 WAIT_AFTER_LOGIN = 12  # Tăng từ 10 lên 12
 # ======================================================
 
@@ -32,8 +32,16 @@ def upshot_task(profile_path, profile_index):
         driver.get(URL)
         time.sleep(7)  # Tăng từ 5 lên 7
         
-        driver.find_element(By.XPATH, "/html/body/div[3]/div/div/div[2]/button").click()
-        time.sleep(2)  # Tăng từ 3 lên 5
+        # Try to click initial button
+        try:
+            initial_button = WebDriverWait(driver, 5).until(
+                EC.element_to_be_clickable((By.XPATH, "/html/body/div[2]/div/div/div[2]/button"))
+            )
+            initial_button.click()
+            time.sleep(2)
+        except Exception as e:
+            print(f"[Profile {profile_index}] Initial button not found or already clicked: {str(e)}")
+        
         # Step 1: Click Google login button in modal
         print(f"[Profile {profile_index}] Step 1: Looking for Google login button...")
         google_selectors = [
@@ -90,47 +98,33 @@ def upshot_task(profile_path, profile_index):
         else:
             print(f"[Profile {profile_index}] Close button not found, modal may have auto-closed")
         
-        # Step 3: Click the three buttons in sequence
-        print(f"[Profile {profile_index}] Step 3: Clicking buttons...")
-        
-        # Button 1
+        # Step 3: Click Claim button
+        print(f"[Profile {profile_index}] Step 3: Clicking Claim button...")
         try:
-            button1 = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "/html/body/div[3]/div/div/div[2]/div[1]/div[1]/button"))
+            claim_button = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, "/html/body/div[4]/div[1]/div[2]/div[2]/div/div/div[2]/div/button"))
             )
-            driver.execute_script("arguments[0].scrollIntoView(true);", button1)
-            time.sleep(3)  # Tăng từ 1 lên 3
-            click_element_safe(driver, button1)
-            print(f"[Profile {profile_index}] Clicked button 1")
-            time.sleep(4)  # Tăng từ 2 lên 4
+            driver.execute_script("arguments[0].scrollIntoView(true);", claim_button)
+            time.sleep(3)
+            click_element_safe(driver, claim_button)
+            print(f"[Profile {profile_index}] Clicked Claim button")
+            time.sleep(4)
         except Exception as e:
-            print(f"[Profile {profile_index}] Error clicking button 1: {str(e)}")
+            print(f"[Profile {profile_index}] Error clicking Claim button: {str(e)}")
         
-        # Button 2
+        # Step 4: Click Skip button
+        print(f"[Profile {profile_index}] Step 4: Clicking Skip button...")
         try:
-            button2 = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "/html/body/div[3]/div/div/div[2]/div[1]/div[2]/button"))
+            skip_button = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, "/html/body/div[4]/div[1]/div[2]/div[2]/div/div/div[2]/button"))
             )
-            driver.execute_script("arguments[0].scrollIntoView(true);", button2)
-            time.sleep(3)  # Tăng từ 1 lên 3
-            click_element_safe(driver, button2)
-            print(f"[Profile {profile_index}] Clicked button 2")
-            time.sleep(4)  # Tăng từ 2 lên 4
+            driver.execute_script("arguments[0].scrollIntoView(true);", skip_button)
+            time.sleep(3)
+            click_element_safe(driver, skip_button)
+            print(f"[Profile {profile_index}] Clicked Skip button")
+            time.sleep(4)
         except Exception as e:
-            print(f"[Profile {profile_index}] Error clicking button 2: {str(e)}")
-        
-        # Button 3
-        try:
-            button3 = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "/html/body/div[5]/div[1]/div[2]/div[2]/div/div[2]/div/button"))
-            )
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button3)
-            time.sleep(3)  # Tăng từ 1 lên 3
-            click_element_safe(driver, button3)
-            print(f"[Profile {profile_index}] Clicked button 3")
-            time.sleep(4)  # Tăng từ 2 lên 4
-        except Exception as e:
-            print(f"[Profile {profile_index}] Error clicking button 3: {str(e)}")
+            print(f"[Profile {profile_index}] Error clicking Skip button: {str(e)}")
         
         print(f"[Profile {profile_index}] Task completed successfully!")
         time.sleep(5)  # Tăng từ 3 lên 5

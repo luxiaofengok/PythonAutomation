@@ -9,7 +9,7 @@ import subprocess
 import os
 
 # ==================== CÀI ĐẶT LỊCH ====================
-START_TIME = "20:50"  # Thời gian bắt đầu chạy (14:14 mỗi ngày)
+START_TIME = "14:18"  # Thời gian bắt đầu chạy (14:14 mỗi ngày)
 DELAY_BETWEEN_SCRIPTS = 300  # Delay giữa các script (giây) - 5 phút
 # ======================================================
 
