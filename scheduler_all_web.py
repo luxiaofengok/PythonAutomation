@@ -9,7 +9,7 @@ import subprocess
 import os
 
 # ==================== CÀI ĐẶT LỊCH ====================
-START_TIME = "14:18"  # Thời gian bắt đầu chạy (14:14 mỗi ngày)
+START_TIME = "17:53"  # Thời gian bắt đầu chạy (14:14 mỗi ngày)
 DELAY_BETWEEN_SCRIPTS = 300  # Delay giữa các script (giây) - 5 phút
 # ======================================================
 
@@ -48,7 +48,7 @@ def run_single_script(script_name):
             env=env,
             encoding='utf-8',
             errors='replace',  # Thay thế ký tự không hiển thị được
-            timeout=1800  # Timeout 30 phút
+            timeout=300  # Timeout 5 phút
         )
         
         # In output, thay thế ký tự đặc biệt nếu cần

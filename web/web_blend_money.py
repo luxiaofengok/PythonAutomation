@@ -39,7 +39,7 @@ def blend_money_automation(profile_path, profile_index):
         print(f"\n[Profile {profile_index}] Starting Blend Money automation...")
         
         # Create driver
-        driver = create_firefox_driver(profile_path, optimize=True, headless=True)
+        driver = create_firefox_driver(profile_path)
         
         # Step 1: Open page and wait for elements to load
         print(f"[Profile {profile_index}] Opening {BLEND_URL}...")

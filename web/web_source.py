@@ -282,11 +282,25 @@ def run_batch(profiles, batch_num, task_function, max_workers=8):
     """
     print(f"\n{'='*60}\nBatch {batch_num} - {len(profiles)} profiles\n{'='*60}\n")
     
+    results = []
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(task_function, p[0], p[1]): p for p in profiles}
-        results = [future.result() for future in as_completed(futures)]
+        
+        # Add timeout for each future (600 seconds = 10 minutes per profile)
+        for future in as_completed(futures, timeout=300):
+            profile_info = futures[future]
+            try:
+                result = future.result(timeout=10)  # Get result with timeout
+                results.append(result)
+                print(f"[Batch {batch_num}] Profile {profile_info[1]} completed")
+            except TimeoutError:
+                print(f"[Batch {batch_num}] Profile {profile_info[1]} TIMEOUT - took too long")
+                results.append(False)
+            except Exception as e:
+                print(f"[Batch {batch_num}] Profile {profile_info[1]} ERROR: {str(e)}")
+                results.append(False)
     
-    print(f"\n{'='*60}\nBatch {batch_num} completed\n{'='*60}\n")
+    print(f"\n{'='*60}\nBatch {batch_num} completed - {sum(results)}/{len(results)} successful\n{'='*60}\n")
     
     # Cleanup after batch
     clean_temp_files()
@@ -313,10 +327,20 @@ def run_all_batches(task_function, profiles=None, wait_between_batches=8):
     
     all_results = []
     for i, batch in enumerate(batches, 1):
-        all_results.extend(run_batch(batch, i, task_function, max_workers=8 if i < 3 else 6))
+        try:
+            print(f"\n[Main] Starting Batch {i}...")
+            batch_results = run_batch(batch, i, task_function, max_workers=8 if i < 3 else 6)
+            all_results.extend(batch_results)
+            print(f"[Main] Batch {i} finished\n")
+        except TimeoutError:
+            print(f"[Main] Batch {i} TIMEOUT - moved to next batch")
+            all_results.extend([False] * len(batch))
+        except Exception as e:
+            print(f"[Main] Batch {i} ERROR: {str(e)}")
+            all_results.extend([False] * len(batch))
         
         if i < len(batches):
-            print(f"\nWaiting {wait_between_batches} seconds before next batch...\n")
+            print(f"\n[Main] Waiting {wait_between_batches} seconds before batch {i+1}...\n")
             time.sleep(wait_between_batches)
     
     # Final cleanup

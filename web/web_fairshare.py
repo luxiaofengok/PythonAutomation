@@ -23,7 +23,7 @@ class FairSharesBot:
     def start(self):
         """Initialize Firefox driver"""
         try:
-            self.driver = create_firefox_driver(self.profile_path, optimize=True, headless=False)
+            self.driver = create_firefox_driver(self.profile_path)
             self.wait = WebDriverWait(self.driver, ELEMENT_TIMEOUT)
             print(f"[Profile {self.profile_index}] Driver started successfully")
             return True
