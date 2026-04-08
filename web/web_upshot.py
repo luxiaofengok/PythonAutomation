@@ -3,7 +3,9 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver import ActionChains
 import time
+from time import sleep
 import sys
 sys.path.append('c:\\PythonAutomation')
 from web.web_source import (
@@ -17,7 +19,7 @@ from web.web_source import (
 
 # ==================== CONFIGURATION ====================
 URL = "https://upshot.cards/claim"
-WAIT_AFTER_LOGIN = 12  # Tăng từ 10 lên 12
+WAIT_AFTER_LOGIN = 15  # Tăng từ 10 lên 15
 # ======================================================
 
 
@@ -98,15 +100,24 @@ def upshot_task(profile_path, profile_index):
         else:
             print(f"[Profile {profile_index}] Close button not found, modal may have auto-closed")
         
+        driver.refresh()
+        sleep(20)  # Tăng từ 3 lên 5
+        action = ActionChains(driver)
+        action.move_to_element_with_offset(driver.find_element(By.TAG_NAME, 'body'), 10, 10).perform()
+        sleep(5)  # Tăng từ 2 lên 5
+
+        
         # Step 3: Click Claim button
         print(f"[Profile {profile_index}] Step 3: Clicking Claim button...")
         try:
             claim_button = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "/html/body/div[4]/div[1]/div[2]/div[2]/div/div/div[2]/div/button"))
+                EC.element_to_be_clickable((By.XPATH, "/html/body/div[4]/div[1]/div[2]/div[2]/div/div/div[2]/div/button"))
             )
-            driver.execute_script("arguments[0].scrollIntoView(true);", claim_button)
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", claim_button)
             time.sleep(3)
             click_element_safe(driver, claim_button)
+            time.sleep(2)
+            click_element_safe(driver, claim_button)  # Nhấn lại để đảm bảo
             print(f"[Profile {profile_index}] Clicked Claim button")
             time.sleep(4)
         except Exception as e:
@@ -116,11 +127,13 @@ def upshot_task(profile_path, profile_index):
         print(f"[Profile {profile_index}] Step 4: Clicking Skip button...")
         try:
             skip_button = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "/html/body/div[4]/div[1]/div[2]/div[2]/div/div/div[2]/button"))
+                EC.element_to_be_clickable((By.XPATH, "/html/body/div[4]/div[1]/div[2]/div[2]/div/div/div[2]/button"))
             )
-            driver.execute_script("arguments[0].scrollIntoView(true);", skip_button)
-            time.sleep(3)
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", skip_button)
+            time.sleep(5)
             click_element_safe(driver, skip_button)
+            time.sleep(2)
+            click_element_safe(driver, skip_button)  # Nhấn lại để đảm bảo
             print(f"[Profile {profile_index}] Clicked Skip button")
             time.sleep(4)
         except Exception as e:
@@ -152,8 +165,9 @@ def main():
     
     # Run all batches (8+8+6 profiles)
     results = run_all_batches(upshot_task, FIREFOX_PROFILES, wait_between_batches=8)
+    # results= upshot_task(FIREFOX_PROFILES[0], 1)
     
-    # Summary
+    #Summary
     success = sum(1 for r in results if r)
     print("\n" + "="*60)
     print(f"COMPLETED: {success}/{len(results)} profiles successful")

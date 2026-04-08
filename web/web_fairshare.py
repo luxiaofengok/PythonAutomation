@@ -1,506 +1,363 @@
-"""
-FairShares Daily Checkin Automation
-Automates: Connect Wallet → OKX Extension → Daily Checkin
-"""
-
-from selenium import webdriver
+from web_source import (
+    create_firefox_driver,
+    find_element_by_selectors,
+    click_element_safe,
+    FIREFOX_PROFILES,
+    run_all_batches
+)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
-from web.web_source import create_firefox_driver, find_element_by_selectors, click_element_safe, ELEMENT_TIMEOUT
 import time
 
+# ==================== CONFIGURATION ====================
+URL = "https://app.fairshares.io/waitlist"
+METAMASK_PASSWORD = "22091997"
 
-class FairSharesBot:
-    def __init__(self, profile_path, profile_index=1, okx_password=""):
-        self.profile_path = profile_path
-        self.profile_index = profile_index
-        self.okx_password = okx_password
-        self.driver = None
-        self.wait = None
-    
-    def start(self):
-        """Initialize Firefox driver"""
-        try:
-            self.driver = create_firefox_driver(self.profile_path)
-            self.wait = WebDriverWait(self.driver, ELEMENT_TIMEOUT)
-            print(f"[Profile {self.profile_index}] Driver started successfully")
-            return True
-        except Exception as e:
-            print(f"[Profile {self.profile_index}] Failed to start driver: {e}")
-            return False
-    
-    def access_website(self, url="https://app.fairshares.io/waitlist?AccessCode=hb2wvt3d"):
-        """Step 1: Access the FairShares website"""
-        try:
-            print(f"[Profile {self.profile_index}] Accessing website: {url}")
-            self.driver.get(url)
+# ==================== SELECTORS ====================
+CONNECT_WALLET_SELECTORS = [
+    "//button[contains(., 'Connect Wallet')]",
+    "//button[contains(., 'Kết nối ví')]",
+]   
+
+SIGN_MSG_SELECTORS = [
+    "//button[contains(., 'Sign Message')]",    
+    "//button[contains(., 'Sign message')]",
+    "//button[contains(., 'Sign')]",
+]
+CLAIM_SELECTORS = [
+    "//div[contains(., 'Daily NFT Check-in')]",
+    "/html/body/div[2]/div/div[2]/div/div[2]/div/div[2]/div[2]/div[1]",
+    "/html/body/div[2]/div/div[2]/div/div[2]/div/div[2]/div[2]/div[1]/div[1]/div/div[1]/p[1]",
+    "/html/body/div[2]/div/div[2]/div/div[2]/div/div[2]/div[3]/div[2]/div[2]/div/div/button",
+    "//button[contains(., 'Check in')]",
+]
+
+# ==================== HELPERS ====================
+
+def _wait_for_new_window(driver, known_windows, timeout=15):
+    """Chờ xuất hiện window mới ngoài known_windows, trả về handle hoặc None"""
+    end = time.time() + timeout
+    while time.time() < end:
+        new_wins = [w for w in driver.window_handles if w not in known_windows]
+        if new_wins:
+            return new_wins[0]
+        time.sleep(1)
+    return None
+
+def _click_metamask_buttons(driver, profile_index, step_label):
+    """Click Connect/Sign/Confirm trong window hiện tại, trả về True nếu click được"""
+    for selector in [
+        "//button[contains(., 'Connect')]",
+        "//button[contains(., 'Sign')]",
+        "//button[contains(., 'Confirm')]",
+    ]:
+        btn = find_element_by_selectors(driver, [selector], wait_time=5)
+        if btn:
+            print(f"[Profile {profile_index}] [{step_label}] Click: {selector}")
+            click_element_safe(driver, btn)
             time.sleep(3)
-            print(f"[Profile {self.profile_index}] Website loaded")
             return True
-        except Exception as e:
-            print(f"[Profile {self.profile_index}] Failed to access website: {e}")
-            return False
-    
-    def skip_login_checks(self):
-        """Skip any login/Google login prompts"""
-        try:
-            print(f"[Profile {self.profile_index}] Checking for login prompts...")
-            
-            # Try to close any login modals
-            close_selectors = [
-                "//button[contains(@aria-label, 'close')]",
-                "//button[contains(@class, 'close')]",
-                "//svg[contains(@class, 'close')]/..",
-                "//div[contains(@class, 'modal')]//button[1]"
-            ]
-            
-            for selector in close_selectors:
-                try:
-                    element = self.driver.find_elements(By.XPATH, selector)
-                    if element:
-                        click_element_safe(self.driver, element[0])
-                        time.sleep(1)
-                except:
-                    continue
-            
-            print(f"[Profile {self.profile_index}] Login checks skipped")
-            return True
-        except Exception as e:
-            print(f"[Profile {self.profile_index}] Error during login skip: {e}")
-            return False
-    
-    def click_connect_wallet(self):
-        """Step 2: Click the Connect Wallet button"""
-        try:
-            print(f"[Profile {self.profile_index}] Looking for Connect Wallet button...")
-            
-            connect_selectors = [
-                "//button[contains(., 'Connect Wallet')]",
-                "//button[contains(., 'connect wallet')]",
-                "//button[contains(., 'Connect wallet')]",
-                "//button[contains(@class, 'connect')]",
-                "//span[contains(., 'Connect')]//..",
-                "//button[contains(., 'Kết nối')]"
-            ]
-            
-            connect_button = find_element_by_selectors(self.driver, connect_selectors, wait_time=15)
-            
-            if not connect_button:
-                print(f"[Profile {self.profile_index}] Connect Wallet button not found")
-                return False
-            
-            print(f"[Profile {self.profile_index}] Found Connect Wallet button, clicking...")
-            self.driver.execute_script("arguments[0].scrollIntoView(true);", connect_button)
-            time.sleep(1)
-            
-            click_element_safe(self.driver, connect_button)
+    print(f"[Profile {profile_index}] [{step_label}] Không thấy button nào để click")
+    return False
+
+# ==================== STEPS ====================
+
+def access_and_connect(driver, profile_index):
+    print(f"[Profile {profile_index}] [B1] Truy cập {URL}...")
+    driver.get(URL)
+    WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+    time.sleep(5)
+
+    connect_btn = find_element_by_selectors(driver, CONNECT_WALLET_SELECTORS, wait_time=15)
+    if not connect_btn:
+        print(f"[Profile {profile_index}] [B1] Không thấy Connect Wallet sau 15s → đã login sẵn, skip B2")
+        return scroll_and_claim(driver, profile_index)
+
+    print(f"[Profile {profile_index}] [B1] Thấy Connect Wallet, đang nhấn...")
+    click_element_safe(driver, connect_btn)
+    time.sleep(5)
+    return True
+
+def _handle_metamask_popup(driver, profile_index, main_window):
+    """Xử lý popup Metamask: unlock → popup 1 → popup 2 (nếu có)"""
+
+    # ---------- Popup 1 ----------
+    popup1 = _wait_for_new_window(driver, known_windows={main_window}, timeout=15)
+    if not popup1:
+        print(f"[Profile {profile_index}] [B2] Không thấy popup MetaMask nào")
+        driver.switch_to.window(main_window)
+        return
+
+    driver.switch_to.window(popup1)
+    time.sleep(3)
+
+    # Unlock nếu cần
+    pass_el = find_element_by_selectors(driver, ["//input[@type='password']"], wait_time=3)
+    if pass_el:
+        print(f"[Profile {profile_index}] [B2] Unlock Metamask...")
+        pass_el.send_keys(METAMASK_PASSWORD)
+        time.sleep(1)
+        unlock_btn = find_element_by_selectors(
+            driver,
+            ["//button[contains(., 'Unlock')]", "//button[contains(., 'Mở khóa')]"],
+            wait_time=10
+        )
+        if unlock_btn:
+            click_element_safe(driver, unlock_btn)
+        time.sleep(3)
+
+    # Click trong popup 1
+    _click_metamask_buttons(driver, profile_index, "Popup1")
+
+    # ---------- Popup 2 (confirm/sign) ----------
+    # Chờ popup 2 xuất hiện — không dùng lại handle popup1 vì nó đã đóng
+    popup2 = _wait_for_new_window(driver, known_windows={main_window}, timeout=10)
+    if not popup2:
+        print(f"[Profile {profile_index}] [B2] Không thấy popup 2 sau 10s → thử nhấn lại Connect Wallet + MetaMask rồi refresh...")
+        # Switch về main
+        if main_window in driver.window_handles:
+            driver.switch_to.window(main_window)
+        else:
+            driver.switch_to.window(driver.window_handles[0])
+
+        # Nhấn lại Connect Wallet nếu có
+        connect_btn = find_element_by_selectors(driver, CONNECT_WALLET_SELECTORS, wait_time=5)
+        if connect_btn:
+            print(f"[Profile {profile_index}] [B2] Nhấn lại Connect Wallet...")
+            click_element_safe(driver, connect_btn)
             time.sleep(3)
-            
-            print(f"[Profile {self.profile_index}] Connect Wallet button clicked")
-            return True
-        except Exception as e:
-            print(f"[Profile {self.profile_index}] Error clicking Connect Wallet: {e}")
-            return False
-    
-    def connect_okx_wallet(self):
-        """Step 3: Select OKX Wallet from the list"""
-        try:
-            print(f"[Profile {self.profile_index}] Looking for OKX Wallet option...")
-            
-            okx_selectors = [
-                "//div[contains(., 'MetaMask')]//button",
-                "//button[contains(., 'MetaMask')]",
-                "//div[contains(@class, 'wallet')]//div[contains(., 'MetaMask')]//..",
-                "//button[contains(., 'MetaMask Wallet')]",
-                "//*[contains(., 'MetaMask')]"
-            ]
-            
-            okx_button = find_element_by_selectors(self.driver, okx_selectors, wait_time=10)
-            
-            if not okx_button:
-                print(f"[Profile {self.profile_index}] MetaMask Wallet option not found")
-                return False
-            
-            print(f"[Profile {self.profile_index}] Found MetaMask Wallet, clicking...")
-            self.driver.execute_script("arguments[0].scrollIntoView(true);", okx_button)
-            time.sleep(1)
-            
-            click_element_safe(self.driver, okx_button)
-            time.sleep(5)
-            
-            print(f"[Profile {self.profile_index}] MetaMask Wallet selected")
-            return True
-        except Exception as e:
-            print(f"[Profile {self.profile_index}] Error selecting MetaMask Wallet: {e}")
-            return False
-    
-    def handle_okx_extension_popup(self):
-        """Step 4: Handle MetaMask extension popup - approve access"""
-        try:
-            print(f"[Profile {self.profile_index}] Waiting for MetaMask extension popup...")
+
+        # Nhấn lại MetaMask nếu có
+        metamask_btn = find_element_by_selectors(driver, ["//button[contains(., 'MetaMask')]"], wait_time=5)
+        if metamask_btn:
+            print(f"[Profile {profile_index}] [B2] Nhấn lại MetaMask...")
+            click_element_safe(driver, metamask_btn)
             time.sleep(3)
-            
-            # Get all window handles
-            original_window = self.driver.current_window_handle
-            all_windows = self.driver.window_handles
-            
-            # Switch to popup if available
-            if len(all_windows) > 1:
-                for window in all_windows:
-                    if window != original_window:
-                        self.driver.switch_to.window(window)
-                        print(f"[Profile {self.profile_index}] Switched to MetaMask popup")
-                        time.sleep(2)
-                        break
-            
-            # Look for approve/connect button
-            approve_selectors = [
-                "//button[contains(., 'Connect')]",
-                "//button[contains(., 'Approve')]",
-                "//button[contains(., 'Allow')]",
-                "//button[contains(@class, 'confirm')]",
-                "//button[1]"
-            ]
-            
-            approve_button = find_element_by_selectors(self.driver, approve_selectors, wait_time=10)
-            
-            if approve_button:
-                print(f"[Profile {self.profile_index}] Found approval button, clicking...")
-                click_element_safe(self.driver, approve_button)
-                time.sleep(2)
-            
-            # Switch back to main window
-            self.driver.switch_to.window(original_window)
-            time.sleep(2)
-            
-            print(f"[Profile {self.profile_index}] MetaMask extension popup handled")
-            return True
-        except Exception as e:
-            print(f"[Profile {self.profile_index}] Error handling MetaMask popup: {e}")
-            try:
-                self.driver.switch_to.window(self.driver.window_handles[0])
-            except:
-                pass
-            return False
-    
-    def enter_okx_password(self):
-        """Step 5: Enter OKX wallet password"""
-        try:
-            print(f"[Profile {self.profile_index}] Looking for password field...")
-            
-            if not self.okx_password:
-                print(f"[Profile {self.profile_index}] No OKX password provided, skipping...")
-                return True
-            
-            # Look for password input
-            password_selectors = [
-                "//input[@type='password']",
-                "//input[@placeholder*='password']",
-                "//input[@placeholder*='Password']",
-                "//input[contains(@class, 'password')]"
-            ]
-            
-            password_field = find_element_by_selectors(self.driver, password_selectors, wait_time=8)
-            
-            if password_field:
-                print(f"[Profile {self.profile_index}] Found password field, entering password...")
-                password_field.clear()
-                password_field.send_keys(self.okx_password)
-                time.sleep(1)
-                
-                # Click confirm button
-                confirm_selectors = [
-                    "//button[contains(., 'Confirm')]",
-                    "//button[contains(., 'Sign')]",
-                    "//button[contains(., 'OK')]",
-                    "//button[2]"
-                ]
-                
-                confirm_button = find_element_by_selectors(self.driver, confirm_selectors, wait_time=8)
-                if confirm_button:
-                    click_element_safe(self.driver, confirm_button)
+
+            # Xử lý lại popup 1
+            retry_popup1 = _wait_for_new_window(driver, known_windows={main_window}, timeout=10)
+            if retry_popup1:
+                print(f"[Profile {profile_index}] [B2] Xử lý lại popup 1 trước khi reload...")
+                driver.switch_to.window(retry_popup1)
+                time.sleep(3)
+
+                # Unlock nếu cần
+                pass_el = find_element_by_selectors(driver, ["//input[@type='password']"], wait_time=3)
+                if pass_el:
+                    pass_el.send_keys(METAMASK_PASSWORD)
+                    time.sleep(1)
+                    unlock_btn = find_element_by_selectors(driver, ["//button[contains(., 'Unlock')]", "//button[contains(., 'Mở khóa')]"], wait_time=10)
+                    if unlock_btn:
+                        click_element_safe(driver, unlock_btn)
                     time.sleep(3)
-                
-                print(f"[Profile {self.profile_index}] Password confirmed")
-                return True
+
+                _click_metamask_buttons(driver, profile_index, "Popup1-Retry")
+                time.sleep(3)
+
+                # Switch về main sau popup 1
+                if main_window in driver.window_handles:
+                    driver.switch_to.window(main_window)
+                else:
+                    driver.switch_to.window(driver.window_handles[0])
             else:
-                print(f"[Profile {self.profile_index}] Password field not found")
-                return False
-        except Exception as e:
-            print(f"[Profile {self.profile_index}] Error entering password: {e}")
+                print(f"[Profile {profile_index}] [B2] Không thấy popup 1 retry, tiếp tục reload...")
+                if main_window in driver.window_handles:
+                    driver.switch_to.window(main_window)
+                else:
+                    driver.switch_to.window(driver.window_handles[0])
+
+        # Reload
+        print(f"[Profile {profile_index}] [B2] Reload web...")
+        driver.refresh()
+        time.sleep(5)
+        # Chờ popup 2 xuất hiện sau reload
+        popup2 = _wait_for_new_window(driver, known_windows={main_window}, timeout=15)
+
+    if popup2:
+        print(f"[Profile {profile_index}] [B2] Thấy popup 2, đang xử lý...")
+        driver.switch_to.window(popup2)
+        time.sleep(3)
+        _click_metamask_buttons(driver, profile_index, "Popup2")
+    else:
+        print(f"[Profile {profile_index}] [B2] Vẫn không có popup 2 sau reload, tiếp tục...")
+
+    # ---------- Switch về main ----------
+    if main_window in driver.window_handles:
+        driver.switch_to.window(main_window)
+    else:
+        driver.switch_to.window(driver.window_handles[0])
+    time.sleep(5)
+
+def handle_popups(driver, profile_index):
+    main_window = driver.current_window_handle
+    
+    # Nhấn Metamask 
+    metamask_btn = find_element_by_selectors(driver, ["//button[contains(., 'MetaMask')]"], wait_time=10)
+    if not metamask_btn:
+        print(f"[Profile {profile_index}] [B2] Không thấy MetaMask button sau 10s, skip B2")
+        return False
+    click_element_safe(driver, metamask_btn)
+    time.sleep(5)
+
+    # Xử lý popup Metamask
+    _handle_metamask_popup(driver, profile_index, main_window)
+    return True
+    
+def scroll_and_claim(driver, profile_index):
+    # Bước 1: Tìm và nhấn Daily Tasks
+    daily_btn = find_element_by_selectors(driver, [
+        "//h3[contains(., 'Daily Tasks')]",
+        "/html/body/div[2]/div/div[2]/div/div[2]/div/div[2]/div[1]/div[1]/div/h3[2]"
+    ], wait_time=10)
+    if not daily_btn:
+        print(f"[Profile {profile_index}] Không tìm thấy Daily Tasks sau 10s")
+        return False
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", daily_btn)
+    time.sleep(3)
+    click_element_safe(driver, daily_btn)
+    time.sleep(3)
+
+    # Bước 2: Tìm và nhấn Daily NFT Check-in (click vào row chứa text)
+    nft_checkin_btn = find_element_by_selectors(driver, [
+        # Leo lên div cha gần nhất từ thẻ p chứa text
+        "//p[contains(text(), 'Daily NFT Check-in')]/..",
+        "//p[contains(text(), 'Daily NFT Check-in')]/../../..",
+        "/html/body/div[2]/div/div[2]/div/div[2]/div/div[2]/div[2]/div[1]",
+    ], wait_time=8)
+    if not nft_checkin_btn:
+        print(f"[Profile {profile_index}] Không tìm thấy Daily NFT Check-in sau 10s")
+        return False
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", nft_checkin_btn)
+    time.sleep(2)
+    # Thử click bằng JS nếu click thường không ăn
+    try:
+        driver.execute_script("arguments[0].click();", nft_checkin_btn)
+    except Exception:
+        click_element_safe(driver, nft_checkin_btn)
+    print(f"[Profile {profile_index}] Đã nhấn Daily NFT Check-in, chờ modal...")
+    time.sleep(2)
+
+    # Bước 3: Modal hiện ra → kiểm tra button là "Check in" hay "Mint"
+    modal_btn = find_element_by_selectors(driver, [
+        "/html/body/div[2]/div/div[2]/div/div[2]/div/div[2]/div[3]/div[2]/div[2]/div/div/button",
+        "/html/body/div/div/div[2]/div/div[2]/div/div[2]/div[3]/div[2]/div[2]/div/div/button",
+        "//button[contains(., 'Check in')]",
+        "//button[contains(., 'Mint')]",
+    ], wait_time=5)
+    if not modal_btn:
+        print(f"[Profile {profile_index}] Không tìm thấy nút trong modal sau 5s")
+        return False
+
+    btn_text = modal_btn.text.strip()
+    print(f"[Profile {profile_index}] Thấy button modal: '{btn_text}'")
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", modal_btn)
+    time.sleep(2)
+
+    # ---------- Trường hợp 1: Check in ----------
+    if "Check in" in btn_text or "Check In" in btn_text:
+        click_element_safe(driver, modal_btn)
+        print(f"[Profile {profile_index}] Đã nhấn Check in!")
+        time.sleep(20)
+        return True
+
+    # ---------- Trường hợp 2: Mint ----------
+    elif "Mint" in btn_text:
+        main_window = driver.current_window_handle
+        click_element_safe(driver, modal_btn)
+        print(f"[Profile {profile_index}] Đã nhấn Mint, chờ popup MetaMask confirm...")
+
+        # Chờ popup MetaMask confirm xuất hiện
+        mint_popup = _wait_for_new_window(driver, known_windows={main_window}, timeout=20)
+        if not mint_popup:
+            print(f"[Profile {profile_index}] Không thấy popup confirm sau 20s")
             return False
-    
-    def sign_wallet(self):
-        """Step 6: Sign the wallet"""
+
+        driver.switch_to.window(mint_popup)
+        time.sleep(3)
+
+        # Nhấn Confirm trong popup MetaMask
+        confirm_btn = find_element_by_selectors(driver, [
+            "//button[contains(., 'Confirm')]",
+            "//button[contains(., 'Xác nhận')]",
+        ], wait_time=10)
+        if confirm_btn:
+            click_element_safe(driver, confirm_btn)
+            print(f"[Profile {profile_index}] Đã nhấn Confirm mint NFT!")
+        else:
+            print(f"[Profile {profile_index}] Không thấy nút Confirm trong popup")
+
+        time.sleep(3)
+
+        # Tắt popup MetaMask (đóng window)
         try:
-            print(f"[Profile {self.profile_index}] Looking for sign/confirm transaction...")
-            
-            # Check for any popups or sign requests
-            time.sleep(2)
-            all_windows = self.driver.window_handles
-            
-            if len(all_windows) > 1:
-                for window in all_windows[1:]:
-                    try:
-                        self.driver.switch_to.window(window)
-                        
-                        # Look for sign/confirm button
-                        sign_selectors = [
-                            "//button[contains(., 'Sign')]",
-                            "//button[contains(., 'Confirm')]",
-                            "//button[contains(., 'OK')]",
-                            "//button[contains(@class, 'confirm')]"
-                        ]
-                        
-                        sign_button = find_element_by_selectors(self.driver, sign_selectors, wait_time=5)
-                        if sign_button:
-                            print(f"[Profile {self.profile_index}] Found sign button, clicking...")
-                            click_element_safe(self.driver, sign_button)
-                            time.sleep(2)
-                    except:
-                        continue
-            
-            # Switch back to main window
-            self.driver.switch_to.window(self.driver.window_handles[0])
-            time.sleep(2)
-            
-            print(f"[Profile {self.profile_index}] Wallet signed")
-            return True
-        except Exception as e:
-            print(f"[Profile {self.profile_index}] Error signing wallet: {e}")
-            try:
-                self.driver.switch_to.window(self.driver.window_handles[0])
-            except:
-                pass
-            return False
-    
-    def wait_for_connection(self, timeout=15):
-        """Wait for wallet to be connected"""
-        try:
-            print(f"[Profile {self.profile_index}] Waiting for wallet connection...")
-            
-            # Look for success indicators
-            success_selectors = [
-                "//div[contains(., 'Connected')]",
-                "//span[contains(., 'Connected')]",
-                "//div[contains(@class, 'success')]",
-                "//div[contains(., 'wallet')]//div[contains(., '0x')]"
-            ]
-            
-            start_time = time.time()
-            while time.time() - start_time < timeout:
-                for selector in success_selectors:
-                    try:
-                        element = self.driver.find_element(By.XPATH, selector)
-                        if element.is_displayed():
-                            print(f"[Profile {self.profile_index}] Wallet connected successfully")
-                            return True
-                    except:
-                        continue
-                time.sleep(1)
-            
-            print(f"[Profile {self.profile_index}] Wallet connection confirmed (timeout)")
-            return True
-        except Exception as e:
-            print(f"[Profile {self.profile_index}] Error waiting for connection: {e}")
-            return True  # Continue anyway
-    
-    def find_daily_checkin(self):
-        """Step 7: Find Daily Checkin section"""
-        try:
-            print(f"[Profile {self.profile_index}] Looking for Daily Checkin section...")
-            
-            checkin_selectors = [
-                "//div[contains(., 'Daily Check')]",
-                "//div[contains(., 'daily check')]",
-                "//section[contains(., 'Daily')]",
-                "//button[contains(., 'Check')]",
-                "//div[contains(@class, 'checkin')]",
-                "//div[contains(text(), 'Daily')]"
-            ]
-            
-            checkin_section = find_element_by_selectors(self.driver, checkin_selectors, wait_time=15)
-            
-            if checkin_section:
-                print(f"[Profile {self.profile_index}] Found Daily Checkin section")
-                self.driver.execute_script("arguments[0].scrollIntoView(true);", checkin_section)
-                time.sleep(2)
-                return True
-            else:
-                print(f"[Profile {self.profile_index}] Daily Checkin section not found")
-                return False
-        except Exception as e:
-            print(f"[Profile {self.profile_index}] Error finding Daily Checkin: {e}")
-            return False
-    
-    def click_checkin_button(self):
-        """Step 8: Click the Checkin button"""
-        try:
-            print(f"[Profile {self.profile_index}] Looking for Checkin button...")
-            
-            checkin_btn_selectors = [
-                "//button[contains(., 'Check In')]",
-                "//button[contains(., 'Checkin')]",
-                "//button[contains(., 'Check-in')]",
-                "//button[contains(., 'CHECK IN')]",
-                "//button[contains(@class, 'checkin')]"
-            ]
-            
-            checkin_button = find_element_by_selectors(self.driver, checkin_btn_selectors, wait_time=10)
-            
-            if not checkin_button:
-                print(f"[Profile {self.profile_index}] Checkin button not found")
-                return False
-            
-            print(f"[Profile {self.profile_index}] Found Checkin button, clicking...")
-            self.driver.execute_script("arguments[0].scrollIntoView(true);", checkin_button)
-            time.sleep(1)
-            
-            click_element_safe(self.driver, checkin_button)
-            time.sleep(3)
-            
-            print(f"[Profile {self.profile_index}] Checkin button clicked")
-            return True
-        except Exception as e:
-            print(f"[Profile {self.profile_index}] Error clicking Checkin: {e}")
-            return False
-    
-    def verify_checkin_success(self, timeout=10):
-        """Verify that daily checkin was successful"""
-        try:
-            print(f"[Profile {self.profile_index}] Verifying checkin success...")
-            
-            success_selectors = [
-                "//div[contains(., 'success')]",
-                "//div[contains(., 'Success')]",
-                "//span[contains(., 'checked in')]",
-                "//div[contains(@class, 'success')]",
-                "//div[contains(., 'Checked in')]"
-            ]
-            
-            start_time = time.time()
-            while time.time() - start_time < timeout:
-                for selector in success_selectors:
-                    try:
-                        element = self.driver.find_element(By.XPATH, selector)
-                        if element.is_displayed():
-                            print(f"[Profile {self.profile_index}] ✓ Daily Checkin successful!")
-                            return True
-                    except:
-                        continue
-                time.sleep(1)
-            
-            print(f"[Profile {self.profile_index}] Checkin completed (verification timeout)")
-            return True
-        except Exception as e:
-            print(f"[Profile {self.profile_index}] Error verifying checkin: {e}")
-            return True  # Continue anyway
-    
-    def run_full_workflow(self, okx_password=""):
-        """Run the complete workflow"""
-        try:
-            self.okx_password = okx_password
-            
-            print(f"\n{'='*60}")
-            print(f"[Profile {self.profile_index}] Starting FairShares Daily Checkin")
-            print(f"{'='*60}\n")
-            
-            # Step 1: Access website
-            if not self.access_website():
-                return False
-            
-            time.sleep(2)
-            
-            # Step 2: Skip login checks
-            self.skip_login_checks()
-            
-            time.sleep(2)
-            
-            # Step 3: Click Connect Wallet
-            if not self.click_connect_wallet():
-                return False
-            
-            time.sleep(2)
-            
-            # Step 4: Connect OKX Wallet
-            if not self.connect_okx_wallet():
-                return False
-            
-            time.sleep(2)
-            
-            # Step 5: Handle OKX extension popup
-            self.handle_okx_extension_popup()
-            
-            time.sleep(2)
-            
-            # Step 6: Enter password if needed
-            self.enter_okx_password()
-            
-            time.sleep(2)
-            
-            # Step 7: Sign wallet
-            self.sign_wallet()
-            
-            time.sleep(2)
-            
-            # Step 8: Wait for connection
-            self.wait_for_connection()
-            
-            time.sleep(3)
-            
-            # Step 9: Find Daily Checkin
-            if not self.find_daily_checkin():
-                return False
-            
-            time.sleep(2)
-            
-            # Step 10: Click Checkin
-            if not self.click_checkin_button():
-                return False
-            
-            time.sleep(3)
-            
-            # Step 11: Verify success
-            self.verify_checkin_success()
-            
-            print(f"\n[Profile {self.profile_index}] ✓ Workflow completed successfully!\n")
-            return True
-        
-        except Exception as e:
-            print(f"[Profile {self.profile_index}] ✗ Workflow error: {e}")
-            return False
-        
-        finally:
-            self.close()
-    
-    def close(self):
-        """Close the driver"""
-        try:
-            if self.driver:
-                time.sleep(2)
-                self.driver.quit()
-                print(f"[Profile {self.profile_index}] Driver closed")
-        except:
+            driver.close()
+            print(f"[Profile {profile_index}] Đã đóng popup MetaMask")
+        except Exception:
             pass
+        time.sleep(2)
 
+        # Switch về main window
+        if main_window in driver.window_handles:
+            driver.switch_to.window(main_window)
+        else:
+            driver.switch_to.window(driver.window_handles[0])
+        time.sleep(5)
 
-def main():
-    """Main function"""
-    # Configuration
-    PROFILE_PATH = "C:\\Users\\Admin\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles\\EYFYwuoC.Profile 1"
-    OKX_PASSWORD = "22091997"  # Enter your OKX wallet password
+        # Nhấn Done trong modal
+        done_btn = find_element_by_selectors(driver, [
+            "/html/body/div/div/div[2]/div/div[2]/div/div[2]/div[3]/div[2]/div[2]/div/div/div[5]/button[2]",
+            "//button[contains(., 'Done')]",
+        ], wait_time=15)
+        if done_btn:
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", done_btn)
+            time.sleep(2)
+            click_element_safe(driver, done_btn)
+            print(f"[Profile {profile_index}] Đã nhấn Done!")
+        else:
+            print(f"[Profile {profile_index}] Không thấy nút Done, bỏ qua")
+
+        time.sleep(10)
+        return True
+
+    else:
+        print(f"[Profile {profile_index}] Button không xác định: '{btn_text}', bỏ qua")
+        return False
+
+def run_fairshare(profile_path, profile_index):
+    driver = None
     
-    # Run the bot
-    bot = FairSharesBot(PROFILE_PATH, profile_index=1, okx_password=OKX_PASSWORD)
+    try:
+        print(f"\n[Profile {profile_index}] Starting Fairshare automation...")
+        driver = create_firefox_driver(profile_path)
+
+        if not access_and_connect(driver, profile_index):
+            print(f"[Profile {profile_index}] Failed at access/connect step.")
+            return False
+        
+        if not handle_popups(driver, profile_index):
+            print(f"[Profile {profile_index}] Failed at handling popups step.")
+            return False
+        
+        if not scroll_and_claim(driver, profile_index):
+            print(f"[Profile {profile_index}] Failed at scroll/claim step.")
+            return False
+        
+        print(f"[Profile {profile_index}] Fairshare automation completed successfully!")
+        return True
+
+    except Exception as e:
+        print(f"\n[Profile {profile_index}] [ERROR] An error occurred: {str(e)}\n")
+        return False
     
-    if bot.start():
-        success = bot.run_full_workflow(okx_password=OKX_PASSWORD)
-        print(f"\n{'='*60}")
-        print(f"Result: {'SUCCESS ✓' if success else 'FAILED ✗'}")
-        print(f"{'='*60}\n")
+    finally:
+        if driver:
+            try:
+                driver.quit()
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
-    main()
+    results = run_all_batches(run_fairshare, FIREFOX_PROFILES)
+    # result = run_fairshare(FIREFOX_PROFILES[1])

@@ -44,3 +44,4 @@ class TestSwitchNewWindow:
 
         # optional: assert that we're not on the original window
         assert driver.current_window_handle == new_handle
+

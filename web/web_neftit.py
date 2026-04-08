@@ -28,7 +28,7 @@ WAIT_AFTER_CLAIM = 3        # Chờ sau khi click claim
 WAIT_BEFORE_CLOSE = 8       # Chờ trước khi đóng browser
 WAIT_BETWEEN_BATCHES = 8    # Chờ giữa các batch
 ELEMENT_TIMEOUT = 30        # Timeout tìm element (giây)
-HEADLESS_MODE = True        # Chạy ở chế độ headless (ẩn trình duyệt)
+HEADLESS_MODE = False       # Chạy ở chế độ headless (ẩn trình duyệt)
 # ============================================================
 
 # Website URL

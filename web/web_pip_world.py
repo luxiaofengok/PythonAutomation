@@ -41,7 +41,7 @@ ELEMENT_TIMEOUT = 40        # Timeout tìm element (giây)
 MAX_RETRIES = 3             # Số lần thử lại khi không tìm thấy element
 # ============================================================
 
-URL = "https://mm.pip.world/"
+URL = "https://mm.pip.world/auth?lang=en"
 
 
 def reload_page_human_like(driver, profile_index, wait_min=25, wait_max=35):
@@ -373,27 +373,10 @@ def process_profile(profile_path, profile_index):
             print(f"[Profile {profile_index}] Check In not found - already checked in, skipping...")
         
         # B3: Click button Share (menu vẫn đang mở)
-        share_selectors = [
-            "//button[contains(text(), 'SHARE')]",
-            "//button[contains(text(), 'Share')]",
-            "//button[contains(text(), 'share')]",
-            "//button[contains(., 'Share')]",
-            "//button[contains(@class, 'share')]",
-            "//*[contains(text(), 'SHARE')]//ancestor::button",
-            "//button[normalize-space()='SHARE']"
-        ]
-        
-        share_found = False
-        for selector in share_selectors:
-            try:
-                if click_button_by_xpath(driver, selector, "Share", profile_index, WAIT_AFTER_BUTTON_CLICK):
-                    share_found = True
-                    break
-            except:
-                continue
-        
-        if not share_found:
-            print(f"[Profile {profile_index}] Share button not found - might be already shared, continuing...")
+        # Chỉ try 1 selector, retry MAX_RETRIES lần, nếu fail thì dừng
+        share_xpath = "/html/body/div[1]/div[1]/div[1]/div[3]/div[4]/div[3]/div[2]/button"
+        if not click_button_by_xpath(driver, share_xpath, "Share", profile_index, WAIT_AFTER_BUTTON_CLICK):
+            print(f"[Profile {profile_index}] Share button not found - already shared, skipping...")
         
         # B4: Click lại vào dropdown ngay sau khi share
         if not click_button_by_xpath(driver, xpath_dropdown, "Dropdown (2nd time - open menu)", profile_index, 3):
@@ -408,27 +391,10 @@ def process_profile(profile_path, profile_index):
         time.sleep(WAIT_AFTER_SHARE)
         
         # B6: Click button Claim
-        claim_selectors = [
-            "//button[contains(text(), 'CLAIM')]",
-            "//button[contains(text(), 'Claim')]",
-            "//button[contains(text(), 'claim')]",
-            "//button[contains(., 'Claim')]",
-            "//button[contains(@class, 'claim')]",
-            "//*[contains(text(), 'CLAIM')]//ancestor::button",
-            "//button[normalize-space()='CLAIM']"
-        ]
-        
-        claim_found = False
-        for selector in claim_selectors:
-            try:
-                if click_button_by_xpath(driver, selector, "Claim", profile_index, WAIT_AFTER_CLAIM):
-                    claim_found = True
-                    break
-            except:
-                continue
-        
-        if not claim_found:
-            print(f"[Profile {profile_index}] Claim button not found - might be already claimed, continuing...")
+        # Chỉ try 1 selector, retry MAX_RETRIES lần, nếu fail thì dừng
+        claim_xpath = "//button[contains(., 'Claim')]"
+        if not click_button_by_xpath(driver, claim_xpath, "Claim", profile_index, WAIT_AFTER_CLAIM):
+            print(f"[Profile {profile_index}] Claim button not found - already claimed, skipping...")
         
         print(f"[Profile {profile_index}] ✅ All tasks completed successfully!")
         time.sleep(WAIT_BEFORE_CLOSE)

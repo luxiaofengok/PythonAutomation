@@ -9,7 +9,7 @@ import subprocess
 import os
 
 # ==================== CÀI ĐẶT LỊCH ====================
-START_TIME = "17:53"  # Thời gian bắt đầu chạy (14:14 mỗi ngày)
+START_TIME = "17:55"  # Thời gian bắt đầu chạy (09:55 mỗi ngày)
 DELAY_BETWEEN_SCRIPTS = 300  # Delay giữa các script (giây) - 5 phút
 # ======================================================
 
@@ -17,14 +17,18 @@ WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
 
 # Danh sách các file cần chạy theo thứ tự
 WEB_SCRIPTS = [
-    "web_blend_money.py",
+    # "web_blend_money.py",
     "web_neftit.py",
     "web_onvoyage.py",
-    "web_perkin.py",
-    "web_pip_world.py",
     "web_play_providence.py",
     "web_tria.py",
-    "web_upshot.py"
+    "web_upshot.py",
+    "web_trex.py",
+    "web_stormrae.py",
+    "web_stormrae.py",
+    "web_fairshare.py",
+    "web_prismax.py",
+    # "web_pip_world.py",
 ]
 
 def run_single_script(script_name):
@@ -48,7 +52,7 @@ def run_single_script(script_name):
             env=env,
             encoding='utf-8',
             errors='replace',  # Thay thế ký tự không hiển thị được
-            timeout=300  # Timeout 5 phút
+            timeout=900  # Timeout 15 phút
         )
         
         # In output, thay thế ký tự đặc biệt nếu cần
