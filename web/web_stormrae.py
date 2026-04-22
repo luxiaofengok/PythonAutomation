@@ -38,6 +38,10 @@ def access_and_connect(driver, profile_index):
     driver.get(URL)
     WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
     time.sleep(5)
+    driver.refresh()
+    time.sleep(15)
+    WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+    time.sleep(5)
 
     connect_btn = find_element_by_selectors(driver, CONNECT_WALLET_SELECTORS, wait_time=15)
     if not connect_btn:
@@ -127,19 +131,37 @@ def handle_phantom(driver, profile_index):
             click_element_safe(driver, sign_btn)
             WebDriverWait(driver, 10).until(lambda d: len(d.window_handles) > 1)
             _handle_phantom_popup(driver, profile_index, main_window)
-        
-        if sign_btn:
-            click_element_safe(driver, sign_btn)
-            WebDriverWait(driver, 10).until(lambda d: len(d.window_handles) > 1)
-            _handle_phantom_popup(driver, profile_index, main_window)
+
+    sign_btn = find_element_by_selectors(driver, SIGN_MSG_SELECTORS, wait_time=10)
+    if sign_btn:
+        click_element_safe(driver, sign_btn)
+        WebDriverWait(driver, 10).until(lambda d: len(d.window_handles) > 1)
+        _handle_phantom_popup(driver, profile_index, main_window)
 
     print(f"[Profile {profile_index}] [B2] Connect thành công, về dashboard")
     return True
 
 
+# ==================== CHECK DASHBOARD ====================
+def check_dashboard(driver, profile_index):
+    """Kiểm tra xem đã vào dashboard thành công chưa bằng URL"""
+    try:
+        current_url = driver.current_url
+        if "/dashboard" in current_url:
+            print(f"[Profile {profile_index}] ✅ Đã vào dashboard")
+            return True
+        else:
+            print(f"[Profile {profile_index}] ❌ Chưa vào dashboard (URL: {current_url})")
+            return False
+        
+    except Exception as e:
+        print(f"[Profile {profile_index}] ❌ Lỗi kiểm tra dashboard: {str(e)}")
+        return False
+
+
 # ==================== B3: SCROLL TÌM VÀ NHẤN CLAIM ====================
 def scroll_and_claim(driver, profile_index):
-    connected_indicator = find_element_by_selectors(driver, ["//div[contains(text(), 'Connected')]", "/html/body/div[5]/main/div/div/div[3]/div/button"], wait_time=10)
+    connected_indicator = find_element_by_selectors(driver, ["//div[contains(text(), 'Continue')]", "/html/body/div[5]/main/div/div/div[3]/div/button"], wait_time=10)
     if connected_indicator:
         click_element_safe(driver, connected_indicator)
         time.sleep(5)
@@ -190,8 +212,23 @@ def run_profile(profile_path, profile_index):
 
         if not access_and_connect(driver, profile_index):
             return False
-        if not handle_phantom(driver, profile_index):
-            return False
+        
+        # Handle Phantom với retry nếu chưa vào dashboard
+        max_retries = 2
+        for retry in range(max_retries):
+            print(f"[Profile {profile_index}] [B2] Lần thử {retry + 1}/{max_retries}")
+            if not handle_phantom(driver, profile_index):
+                return False
+            
+            # Check xem đã vào dashboard chưa
+            time.sleep(3)
+            if check_dashboard(driver, profile_index):
+                break
+            
+            if retry < max_retries - 1:
+                print(f"[Profile {profile_index}] [B2] Dashboard chưa load, thử lại...")
+                time.sleep(2)
+        
         if not scroll_and_claim(driver, profile_index):
             return False
 
@@ -212,6 +249,7 @@ def run_profile(profile_path, profile_index):
 
 def main():
     run_all_batches(run_profile, FIREFOX_PROFILES)
+    # run_profile(FIREFOX_PROFILES[1], 2)  # Chạy riêng profile đầu tiên để debug
 
 if __name__ == "__main__":
     main()

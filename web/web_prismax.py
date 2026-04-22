@@ -33,7 +33,9 @@ def access_and_connect(driver, profile_index):
     WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
     time.sleep(8)
     driver.refresh()
-    time.sleep(8)
+    time.sleep(15)
+    driver.refresh()
+    time.sleep(15)
 
     connect_btn = find_element_by_selectors(driver, CONNECT_WALLET_SELECTORS, wait_time=15)
     if not connect_btn:

@@ -9,25 +9,23 @@ import subprocess
 import os
 
 # ==================== CÀI ĐẶT LỊCH ====================
-START_TIME = "17:55"  # Thời gian bắt đầu chạy (09:55 mỗi ngày)
+START_TIME = "19:31"  # Thời gian bắt đầu chạy (09:55 mỗi ngày)
 DELAY_BETWEEN_SCRIPTS = 300  # Delay giữa các script (giây) - 5 phút
 # ======================================================
-
 WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
 
 # Danh sách các file cần chạy theo thứ tự
 WEB_SCRIPTS = [
     # "web_blend_money.py",
-    "web_neftit.py",
-    "web_onvoyage.py",
-    "web_play_providence.py",
-    "web_tria.py",
-    "web_upshot.py",
+    # "web_neftit.py",
+    # "web_onvoyage.py",
+    # "web_play_providence.py",
+    # "web_tria.py",
     "web_trex.py",
-    "web_stormrae.py",
     "web_stormrae.py",
     "web_fairshare.py",
     "web_prismax.py",
+    "web_upshot.py",
     # "web_pip_world.py",
 ]
 
