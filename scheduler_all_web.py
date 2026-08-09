@@ -7,27 +7,28 @@ import time
 from datetime import datetime
 import subprocess
 import os
-
 # ==================== CÀI ĐẶT LỊCH ====================
-START_TIME = "19:31"  # Thời gian bắt đầu chạy (09:55 mỗi ngày)
+START_TIME = "15:52"  # Thời gian bắt đầu chạy (09:55 mỗi ngày)
 DELAY_BETWEEN_SCRIPTS = 300  # Delay giữa các script (giây) - 5 phút
 # ======================================================
 WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
 
 # Danh sách các file cần chạy theo thứ tự
 WEB_SCRIPTS = [
-    # "web_blend_money.py",
-    # "web_neftit.py",
-    # "web_onvoyage.py",
-    # "web_play_providence.py",
-    # "web_tria.py",
-    "web_trex.py",
-    "web_stormrae.py",
-    "web_fairshare.py",
-    "web_prismax.py",
+    "web_nasun.py",
+    "web_loqua.py",
+    "web_dac.py",
     "web_upshot.py",
-    # "web_pip_world.py",
-]
+    "web_neftit.py",
+    "web_onvoyage.py",
+    "web_play_providence.py",
+    "web_stormrae.py", 
+    "web_fairshare.py",
+    "web_dustswap.py",
+    "web_courtyard.py",
+    "web_trex.py",
+    "web_prismax.py",
+]   
 
 def run_single_script(script_name):
     """Chạy một automation script"""
@@ -50,7 +51,7 @@ def run_single_script(script_name):
             env=env,
             encoding='utf-8',
             errors='replace',  # Thay thế ký tự không hiển thị được
-            timeout=900  # Timeout 15 phút
+            timeout=3600  # Timeout 60 phút
         )
         
         # In output, thay thế ký tự đặc biệt nếu cần
@@ -77,7 +78,7 @@ def run_single_script(script_name):
         return success
         
     except subprocess.TimeoutExpired:
-        print(f"\n[ERROR] {script_name} timeout sau 30 phút!\n")
+        print(f"\n[ERROR] {script_name} timeout sau 5 phút!\n")
         return False
     except Exception as e:
         print(f"\n[ERROR] Failed to run {script_name}: {str(e)}\n")

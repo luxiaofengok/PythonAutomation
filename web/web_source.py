@@ -74,6 +74,7 @@ def create_firefox_driver(profile_path, optimize=True, headless=False):
     if headless:
         options.add_argument('--headless')
     
+    
     # Cookie persistence settings - ALWAYS enabled to keep login
     cookie_prefs = {
         "network.cookie.cookieBehavior": 0,  # Accept all cookies
@@ -84,6 +85,7 @@ def create_firefox_driver(profile_path, optimize=True, headless=False):
     }
     for key, value in cookie_prefs.items():
         options.set_preference(key, value)
+
     
     if optimize:
         prefs = {
@@ -100,10 +102,24 @@ def create_firefox_driver(profile_path, optimize=True, headless=False):
     try:
         driver = webdriver.Firefox(options=options)
         driver.maximize_window()
+        time.sleep(10)  # Chờ profile load
         return driver
     except Exception as e:
         raise Exception(f"Failed to create Firefox driver: {str(e)}")
 
+
+# def find_element_by_selectors(driver, selectors, wait_time=30):
+#     """Find element using multiple selectors"""
+#     for selector in selectors:
+#         try:
+#             element = WebDriverWait(driver, wait_time).until(
+#                 EC.presence_of_element_located((By.XPATH, selector))
+#             )
+#             if element.is_displayed():
+#                 return element
+#         except:
+#             continue
+#     return None
 
 def find_element_by_selectors(driver, selectors, wait_time=30):
     """Find element using multiple selectors"""
@@ -112,9 +128,18 @@ def find_element_by_selectors(driver, selectors, wait_time=30):
             element = WebDriverWait(driver, wait_time).until(
                 EC.presence_of_element_located((By.XPATH, selector))
             )
-            if element.is_displayed():
+            try:
+                
+                if element.is_displayed():
+                    return element
+                else:
+                    continue
+            except Exception as e:
+                print(f"[find_element_by_selectors] is_displayed() lỗi (có thể do LavaMoat) trên selector '{selector}': {e}. Vẫn trả về element vì presence đã được xác nhận.")
                 return element
-        except:
+        except Exception as e:
+            # log lại lý do thật, thay vì except: continue im lặng
+            print(f"[find_element_by_selectors] Selector '{selector}' không tìm thấy: {e}")
             continue
     return None
 
@@ -135,6 +160,10 @@ def click_element_safe(driver, element):
             continue
     return False
 
+def scroll_to_element(driver, element):
+    """Scroll đến element"""
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+    time.sleep(1)
 
 def check_login_status(driver, logged_in_indicators, profile_index=0):
     """Check if already logged in"""
@@ -150,7 +179,7 @@ def check_login_status(driver, logged_in_indicators, profile_index=0):
     return False
 
 
-def login_with_google(driver, profile_index=0):
+def login_with_google(driver, profile_index):
     """Perform Google login flow"""
     try:
         # Find and click Google button
@@ -169,7 +198,7 @@ def login_with_google(driver, profile_index=0):
         driver.execute_script("arguments[0].scrollIntoView(true);", google_button)
         time.sleep(1)
         google_button.click()
-        time.sleep(5)
+        time.sleep(3)
         
         # Select Google account
         account_selectors = [
@@ -271,26 +300,51 @@ def click_at_position(driver, x_percent, y_percent):
         print(f"Click position error: {str(e)}")
 
 
-def run_batch(profiles, batch_num, task_function, max_workers=8):
-    """
-    Run batch of profiles concurrently
-    Args:
-        profiles: List of (profile_path, profile_index) tuples
-        batch_num: Batch number for logging
-        task_function: Function to run for each profile (profile_path, profile_idx)
-        max_workers: Number of concurrent workers
-    """
-    print(f"\n{'='*60}\nBatch {batch_num} - {len(profiles)} profiles\n{'='*60}\n")
+# def run_batch(profiles, batch_num, task_function, max_workers=6):
+#     """
+#     Run batch of profiles concurrently
+#     Args:
+#         profiles: List of (profile_path, profile_index) tuples
+#         batch_num: Batch number for logging
+#         task_function: Function to run for each profile (profile_path, profile_idx)
+#         max_workers: Number of concurrent workers
+#     """
+#     print(f"\n{'='*60}\nBatch {batch_num} - {len(profiles)} profiles\n{'='*60}\n")
     
+#     with ThreadPoolExecutor(max_workers=max_workers) as executor:
+#         futures = {executor.submit(task_function, p[0], p[1]): p for p in profiles}
+#         results = [future.result() for future in as_completed(futures)]       
+    
+#     print(f"\n{'='*60}\nBatch {batch_num} completed\n{'='*60}\n")
+    
+#     # Cleanup after batch
+#     clean_temp_files()
+    
+#     return results
+
+# THAY ĐỔI hàm run_batch()
+def run_batch(profiles, batch_num, task_function, max_workers=6, task_timeout=300):
+    """task_timeout: giây tối đa cho mỗi profile (default 5 phút)"""
+    print(f"\n{'='*60}\nBatch {batch_num} - {len(profiles)} profiles\n{'='*60}\n")
+
+    results = []
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(task_function, p[0], p[1]): p for p in profiles}
-        results = [future.result() for future in as_completed(futures)]       
-    
+        for future in as_completed(futures):
+            profile = futures[future]
+            try:
+                result = future.result(timeout=task_timeout)  # ← THÊM timeout
+                results.append(result)
+            except TimeoutError:
+                print(f"[Profile {profile[1]}] TIMEOUT sau {task_timeout}s, bỏ qua!")
+                future.cancel()
+                results.append(False)
+            except Exception as e:
+                print(f"[Profile {profile[1]}] Exception: {e}")
+                results.append(False)
+
     print(f"\n{'='*60}\nBatch {batch_num} completed\n{'='*60}\n")
-    
-    # Cleanup after batch
     clean_temp_files()
-    
     return results
 
 
@@ -336,6 +390,6 @@ if __name__ == "__main__":
     print("- find_element_by_selectors, click_element_safe")
     print("- clean_temp_files, cleanup_all")
     print("\nBatch Functions:")
-    print("- run_batch(profiles, batch_num, task_function, max_workers=8)")
+    print("- run_batch(profiles, batch_num, task_function, max_workers=6)")
     print("- run_all_batches(task_function, profiles=None, wait_between_batches=8)")
     print("=" * 60)

@@ -1,3 +1,28 @@
 {
-    "editor.formatOnSave": true
+  "editor.inlineSuggest.enabled": true,
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+  "editor.suggestOnTriggerCharacters": true,
+  "editor.suggest.showWords": true,
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false,
+    "python": true
+  },
+  "github.copilot.inlineSuggest.enable": true,
+  "github.copilot.chat.enableFileEditing": true,
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "python.languageServer": "Pylance",
+  "python.analysis.typeCheckingMode": "off",
+  "chat.tools.terminal.autoApprove": {
+    "/^python -m py_compile \"C:\\\\PythonAutomation\\\\web\\\\captcha\\.py\"$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
+  }
 }

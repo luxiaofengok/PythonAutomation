@@ -44,7 +44,16 @@ def access_and_connect(driver, profile_index):
 
     print(f"[Profile {profile_index}] [B1] Thấy Connect Wallet, đang nhấn...")
     click_element_safe(driver, connect_btn)
+    time.sleep(1)
+    connect_selectors = [
+        "/html/body/div[3]/div/div[3]/button/span[1]/span[2]",
+        "//button[contains(., 'Connect a wallet')]",
+    ]
+    connect_button = find_element_by_selectors(driver, connect_selectors, wait_time=10)
+    if connect_button:
+        click_element_safe(driver, connect_button)
     time.sleep(5)
+
     return True
 # ==================== B2: XỬ LÝ PHANTOM ====================
 def _handle_phantom_popup(driver, profile_index, main_window):

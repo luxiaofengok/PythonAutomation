@@ -17,7 +17,7 @@ jobs:
           - tests/test_login.py
           - tests/test_api.py
     steps:
-      - name: Checkout source code from github
+      - name: Checkout source code from github 
         uses: actions/checkout@v4
 
       - name: Set up Python

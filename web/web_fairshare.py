@@ -288,6 +288,24 @@ def scroll_and_claim(driver, profile_index):
     time.sleep(3)
     click_element_safe(driver, daily_btn)
     time.sleep(3)
+    
+    main_window = driver.current_window_handle
+    like_btn = find_element_by_selectors(driver, [
+        "/html/body/div[3]/div/div[2]/div/div[2]/div/div[2]/div[2]/div[2]/div[1]/div/div[1]/p[2]",
+        "//p[contains(., 'Like on X')]",
+    ], wait_time=10)
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", like_btn)
+    if like_btn:
+        print(f"[Profile {profile_index}] Nhan like tren X...")
+        click_element_safe(driver, like_btn)
+        time.sleep(3)
+    for handle in driver.window_handles:
+        if handle != main_window:
+            driver.switch_to.window(handle)
+            time.sleep(2)
+            driver.close()
+    driver.switch_to.window(main_window)
+    time.sleep(3)
 
     # Buoc 2: Tim va nhan Daily NFT Check-in
     nft_checkin_btn = find_element_by_selectors(driver, [
@@ -359,7 +377,7 @@ def scroll_and_claim(driver, profile_index):
                 continue
 
             driver.switch_to.window(mint_popup)
-            time.sleep(3)
+            time.sleep(8)
 
             # Tim nut Confirm
             confirm_btn = find_element_by_selectors(driver, [
@@ -378,7 +396,7 @@ def scroll_and_claim(driver, profile_index):
                     print(f"[Profile {profile_index}] Da dong popup MetaMask")
                 except Exception:
                     pass
-                time.sleep(3)
+                time.sleep(5)
 
                 # Switch ve main
                 if main_window in driver.window_handles:
@@ -426,6 +444,8 @@ def scroll_and_claim(driver, profile_index):
     else:
         print(f"[Profile {profile_index}] Button khong xac dinh: '{btn_text}', bo qua")
         return False
+    
+    
 
 def run_fairshare(profile_path, profile_index):
     driver = None
@@ -463,4 +483,4 @@ def run_fairshare(profile_path, profile_index):
 
 if __name__ == "__main__":
     results = run_all_batches(run_fairshare, FIREFOX_PROFILES)
-    # result = run_fairshare(FIREFOX_PROFILES[1])
+    # result = run_fairshare(FIREFOX_PROFILES[0], 1)

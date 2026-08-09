@@ -4,20 +4,14 @@ from utils.config_reader import ConfigReader
 
 
 class TestJSONPlaceholderAPI:
-
-    @pytest.fixture(scope="function")
-    def api(self):
-        """Create API helper with config"""
-        helper = APIHelper(base_url=ConfigReader.get_api_url())
-        yield helper
-        helper.close()
-    
+   
     def test_get_todo_verify_id_1(self, api):
 
         # Call API to get todo with id=1
         todo = api.get("todos/1")
         
         print(f"\n📋 Todo response: {todo}")
+
         
         # Assertions
         assert todo["userId"] == 1, \
@@ -31,7 +25,6 @@ class TestJSONPlaceholderAPI:
         
         assert todo["completed"] == False, \
             f"Expected completed=False but got {todo['completed']}"
-        
         # Print success
         print(f"\n✅ Verified todo:")
         print(f"   User ID: {todo['userId']}")
@@ -55,6 +48,7 @@ class TestJSONPlaceholderAPI:
         
         assert user["email"] == "Shanna@melissa.tv", \
             f"Expected email='Shanna@melissa.tv' but got '{user['email']}'"
+
         
         # Print success
         print(f"\n✅ Verified user:")

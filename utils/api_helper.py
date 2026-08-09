@@ -26,6 +26,18 @@ class APIHelper:
         response.raise_for_status()
         return response.json()
     
+    def put(self, endpoint, data=None):
+        url = f"{self.base_url}/{endpoint}"
+        response = self.session.put(url, json=data)
+        response.raise_for_status()
+        return response.json()
+    
+    def delete(self, endpoint):
+        url = f"{self.base_url}/{endpoint}"
+        response = self.session.delete(url)
+        response.raise_for_status()
+        return response.json()
+    
     def close(self):
         """Close the session"""
         self.session.close()

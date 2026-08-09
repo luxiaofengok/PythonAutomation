@@ -1,5 +1,6 @@
 import pytest
 from selenium import webdriver
+from utils.api_helper import APIHelper
 from utils.config_reader import ConfigReader
 
 @pytest.fixture(scope="function")
@@ -16,8 +17,16 @@ def driver():
     #url=ConfigReader.get_base_url()
     driver.get(url)
     yield driver #cho script chay het roi moi toi teardown(after test)
+
     
     #day la phan teardown cho moi script
     driver.quit()
+
+@pytest.fixture(scope="function")
+def api():
+    """Create API helper with config"""
+    helper = APIHelper(ConfigReader.get_api_url())
+    yield helper
+    helper.close()
     
 

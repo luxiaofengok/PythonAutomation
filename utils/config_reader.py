@@ -13,6 +13,7 @@ class ConfigReader:
                 ConfigReader._config= json.load(config_file)
         return ConfigReader._config
 
+
     @staticmethod
     def get_base_url():
         """Get the base URL from the configuration"""
@@ -30,7 +31,7 @@ class ConfigReader:
         """Get the password from the configuration"""
         return ConfigReader.load_config()['credentials']['password']
     @staticmethod
-    def get_time_out():
+    def get_timeout():
         """Get the timeout configuration"""
         return ConfigReader.load_config()['timeout']
 

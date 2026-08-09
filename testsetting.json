@@ -4,6 +4,7 @@
 "credentials":{
     "username" : "Admin",
     "password": "admin123"
+
 },
 "headless": false,
 "timeout":{

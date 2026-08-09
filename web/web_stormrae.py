@@ -33,25 +33,31 @@ CLAIM_SELECTORS = [
 
 
 # ==================== B1: VÀO WEB + NHẤN CONNECT ====================
-def access_and_connect(driver, profile_index):
-    print(f"[Profile {profile_index}] [B1] Truy cập {URL}...")
-    driver.get(URL)
-    WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-    time.sleep(5)
-    driver.refresh()
-    time.sleep(15)
-    WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-    time.sleep(5)
+def access_stormrae(driver, profile_index):
+   
+    try:
+        
+        driver.get(URL)
 
-    connect_btn = find_element_by_selectors(driver, CONNECT_WALLET_SELECTORS, wait_time=15)
-    if not connect_btn:
-        print(f"[Profile {profile_index}] [B1] Không thấy Connect Wallet sau 15s → đã login sẵn, skip B2")
-        return scroll_and_claim(driver, profile_index)
+        # Wait for page to load
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.TAG_NAME, "body"))
+        )
+        time.sleep(2)
 
-    print(f"[Profile {profile_index}] [B1] Thấy Connect Wallet, đang nhấn...")
-    click_element_safe(driver, connect_btn)
-    time.sleep(5)
-    return True
+        connect_btn = find_element_by_selectors(driver, CONNECT_WALLET_SELECTORS, wait_time=15)
+        if  connect_btn:
+            print(f"[Profile {profile_index}] [B1] Thấy Connect Wallet, đang nhấn...")
+            click_element_safe(driver, connect_btn)
+            time.sleep(5)
+
+
+        print(f"[Profile {profile_index}] [N1] Page loaded successfully")
+        return True
+
+    except Exception as e:
+        print(f"[Profile {profile_index}] [N1] Error accessing page: {str(e)}")
+        return False
 
 
 # ==================== B2: XỬ LÝ PHANTOM ====================
@@ -59,7 +65,7 @@ def _handle_phantom_popup(driver, profile_index, main_window):
     """Xử lý popup Phantom: unlock nếu cần, nhấn Connect/Sign/Approve"""
     new_window = [w for w in driver.window_handles if w != main_window][0]
     driver.switch_to.window(new_window)
-    time.sleep(3)
+    time.sleep(5)
 
     # Unlock nếu cần
     pass_el = find_element_by_selectors(driver, ["//input[@type='password']"], wait_time=3)
@@ -88,26 +94,24 @@ def handle_phantom(driver, profile_index):
     main_window = driver.current_window_handle
 
     # Nhấn Phantom
-    phantom_btn = find_element_by_selectors(driver, ["//button[contains(., 'Phantom')]"], wait_time=10)
-    if not phantom_btn:
-        print(f"[Profile {profile_index}] [B2] Không tìm thấy nút Phantom.")
-        return False
-    click_element_safe(driver, phantom_btn)
+    phantom_btn = find_element_by_selectors(driver, ["//button[contains(., 'Phantom')]"], wait_time=15)
+    if phantom_btn:
+        click_element_safe(driver, phantom_btn)
 
     # Chờ popup tối đa 8s
     try:
-        WebDriverWait(driver, 8).until(lambda d: len(d.window_handles) > 1)
+        WebDriverWait(driver, 15).until(lambda d: len(d.window_handles) > 1)
         print(f"[Profile {profile_index}] [B2] Popup xuất hiện, đang xử lý...")
         _handle_phantom_popup(driver, profile_index, main_window)
 
     except Exception:
         # Không có popup → reload → Connect → rồi chia 2 trường hợp
-        print(f"[Profile {profile_index}] [B2] Không thấy popup sau 8s, reload...")
+        print(f"[Profile {profile_index}] [B2] Không thấy popup sau 15s, reload...")
         driver.refresh()
         time.sleep(5)
 
         # Nhấn Connect Wallet
-        connect_btn = find_element_by_selectors(driver, CONNECT_WALLET_SELECTORS, wait_time=10)
+        connect_btn = find_element_by_selectors(driver, CONNECT_WALLET_SELECTORS, wait_time=15)
         if connect_btn:
             print(f"[Profile {profile_index}] [B2] Nhấn Connect Wallet sau reload...")
             click_element_safe(driver, connect_btn)
@@ -118,57 +122,39 @@ def handle_phantom(driver, profile_index):
         if phantom_btn2:
             print(f"[Profile {profile_index}] [B2] Thấy Phantom button, nhấn...")
             click_element_safe(driver, phantom_btn2)
-            WebDriverWait(driver, 10).until(lambda d: len(d.window_handles) > 1)
+            WebDriverWait(driver, 15).until(lambda d: len(d.window_handles) > 1)
             _handle_phantom_popup(driver, profile_index, main_window)
 
         else:
             # TH2: Không thấy Phantom → nhấn Sign Message → xử lý popup
-            sign_btn = find_element_by_selectors(driver, SIGN_MSG_SELECTORS, wait_time=10)
-            if not sign_btn:
-                print(f"[Profile {profile_index}] [B2] Không tìm thấy Phantom lẫn Sign Message.")
-                return False
-            print(f"[Profile {profile_index}] [B2] Thấy Sign Message, nhấn...")
-            click_element_safe(driver, sign_btn)
-            WebDriverWait(driver, 10).until(lambda d: len(d.window_handles) > 1)
-            _handle_phantom_popup(driver, profile_index, main_window)
+            sign_btn = find_element_by_selectors(driver, SIGN_MSG_SELECTORS, wait_time=15)
+            if sign_btn:
+                print(f"[Profile {profile_index}] [B2] Thấy Sign Message, nhấn...")
+                click_element_safe(driver, sign_btn)
+                WebDriverWait(driver, 15).until(lambda d: len(d.window_handles) > 1)
+                _handle_phantom_popup(driver, profile_index, main_window)
 
     sign_btn = find_element_by_selectors(driver, SIGN_MSG_SELECTORS, wait_time=10)
     if sign_btn:
         click_element_safe(driver, sign_btn)
-        WebDriverWait(driver, 10).until(lambda d: len(d.window_handles) > 1)
+        WebDriverWait(driver, 15).until(lambda d: len(d.window_handles) > 1)
         _handle_phantom_popup(driver, profile_index, main_window)
 
     print(f"[Profile {profile_index}] [B2] Connect thành công, về dashboard")
     return True
 
 
-# ==================== CHECK DASHBOARD ====================
-def check_dashboard(driver, profile_index):
-    """Kiểm tra xem đã vào dashboard thành công chưa bằng URL"""
-    try:
-        current_url = driver.current_url
-        if "/dashboard" in current_url:
-            print(f"[Profile {profile_index}] ✅ Đã vào dashboard")
-            return True
-        else:
-            print(f"[Profile {profile_index}] ❌ Chưa vào dashboard (URL: {current_url})")
-            return False
-        
-    except Exception as e:
-        print(f"[Profile {profile_index}] ❌ Lỗi kiểm tra dashboard: {str(e)}")
-        return False
-
 
 # ==================== B3: SCROLL TÌM VÀ NHẤN CLAIM ====================
 def scroll_and_claim(driver, profile_index):
-    connected_indicator = find_element_by_selectors(driver, ["//div[contains(text(), 'Continue')]", "/html/body/div[5]/main/div/div/div[3]/div/button"], wait_time=10)
+    connected_indicator = find_element_by_selectors(driver, ["//div[contains(text(), 'Continue')]", "/html/body/div[5]/main/div/div/div[3]/div/button"], wait_time=15)
     if connected_indicator:
         click_element_safe(driver, connected_indicator)
-        time.sleep(5)
+        time.sleep(10)
 
     print(f"[Profile {profile_index}] [B3] Scroll tìm nút Claim...")
     driver.execute_script("window.scrollTo(0, 0);")
-    time.sleep(2)
+    time.sleep(5)
 
     for i in range(20):
         driver.execute_script("window.scrollBy(0, 300);")
@@ -210,24 +196,12 @@ def run_profile(profile_path, profile_index):
         print(f"\n[Profile {profile_index}] Khởi động Firefox...")
         driver = create_firefox_driver(profile_path)
 
-        if not access_and_connect(driver, profile_index):
+        if not access_stormrae(driver, profile_index):
             return False
         
         # Handle Phantom với retry nếu chưa vào dashboard
-        max_retries = 2
-        for retry in range(max_retries):
-            print(f"[Profile {profile_index}] [B2] Lần thử {retry + 1}/{max_retries}")
-            if not handle_phantom(driver, profile_index):
-                return False
-            
-            # Check xem đã vào dashboard chưa
-            time.sleep(3)
-            if check_dashboard(driver, profile_index):
-                break
-            
-            if retry < max_retries - 1:
-                print(f"[Profile {profile_index}] [B2] Dashboard chưa load, thử lại...")
-                time.sleep(2)
+        if not handle_phantom(driver, profile_index):
+            return False
         
         if not scroll_and_claim(driver, profile_index):
             return False
