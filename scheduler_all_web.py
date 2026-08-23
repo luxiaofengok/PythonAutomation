@@ -8,7 +8,7 @@ from datetime import datetime
 import subprocess
 import os
 # ==================== CÀI ĐẶT LỊCH ====================
-START_TIME = "15:52"  # Thời gian bắt đầu chạy (09:55 mỗi ngày)
+START_TIME = "14:35"  # Thời gian bắt đầu chạy (09:55 mỗi ngày)
 DELAY_BETWEEN_SCRIPTS = 300  # Delay giữa các script (giây) - 5 phút
 # ======================================================
 WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
