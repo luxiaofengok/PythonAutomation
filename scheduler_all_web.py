@@ -8,25 +8,28 @@ from datetime import datetime
 import subprocess
 import os
 # ==================== CÀI ĐẶT LỊCH ====================
-START_TIME = "14:35"  # Thời gian bắt đầu chạy (09:55 mỗi ngày)
+START_TIME = "07:22"  # Thời gian bắt đầu chạy (09:55 mỗi ngày)
 DELAY_BETWEEN_SCRIPTS = 300  # Delay giữa các script (giây) - 5 phút
 # ======================================================
 WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
 
 # Danh sách các file cần chạy theo thứ tự
 WEB_SCRIPTS = [
+    "web_scalenetwork.py",
     "web_nasun.py",
+    "web_savethelife.py",
     "web_loqua.py",
-    "web_dac.py",
+    # "web_dac.py",
     "web_upshot.py",
-    "web_neftit.py",
+    # "web_neftit.py",
     "web_onvoyage.py",
     "web_play_providence.py",
-    "web_stormrae.py", 
+    # "web_stormrae.py", 
     "web_fairshare.py",
-    "web_dustswap.py",
+    # "web_dustswap.py",
     "web_courtyard.py",
     "web_trex.py",
+    "web_scalenetwork.py",
     "web_prismax.py",
 ]   
 

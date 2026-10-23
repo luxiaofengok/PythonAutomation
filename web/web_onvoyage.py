@@ -14,7 +14,7 @@ WAIT_BETWEEN_BATCHES = 8    # Chờ giữa các batch
 ELEMENT_TIMEOUT = 30        # Timeout tìm element (giây)
 # ============================================================
 
-ONVOYAGE_URL = "https://app.onvoyage.ai/dashboard"
+ONVOYAGE_URL = "https://app.onvoyage.ai/login"
 
 
 def onvoyage_automation(profile_path, profile_index):

@@ -82,6 +82,9 @@ def create_firefox_driver(profile_path, optimize=True, headless=False):
         "privacy.clearOnShutdown.cookies": False,  # Don't clear cookies on shutdown
         "privacy.clearOnShutdown.cache": False,  # Don't clear cache on shutdown
         "privacy.clearOnShutdown.sessions": False,  # Don't clear sessions
+        "dom.disable_open_during_load": False,
+        "dom.popup_allowed_events": "click,change,submit,reset,button,mouseup,pointerup",
+        "browser.link.open_newwindow.restriction": 0,
     }
     for key, value in cookie_prefs.items():
         options.set_preference(key, value)
